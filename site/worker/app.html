@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.webmanifest">
+<title>Feed</title>
+<style>
+:root{--bg:#0a0a0a;--fg:#f5f5f5;--mu:#818181;--ln:#1f1f1f;--card:#121212;--go:#22c55e;--no:#ef4444;--ed:#e5e5e5}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:clip;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+body{display:flex;flex-direction:column;height:100dvh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+header{display:flex;align-items:center;gap:8px;padding:10px 16px 6px}
+header h1{font-size:17px;font-weight:600;margin:0;flex:1}
+header h1 span{color:var(--mu);font-weight:400;margin-left:6px}
+.ib{width:40px;height:40px;border-radius:20px;display:grid;place-items:center;position:relative}
+.ib:active{background:#1a1a1a}
+.ib svg{width:22px;height:22px;stroke:var(--fg);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.dot{position:absolute;top:8px;right:8px;width:8px;height:8px;border-radius:4px;background:var(--mu)}
+.dot.bad{background:var(--no)}
+#warn{margin:0 16px 6px;font-size:13px;color:#fbbf24;display:none}
+main{flex:1;position:relative;margin:0 12px;min-height:0;min-width:0}
+.sheet,.toast{max-width:560px;margin:0 auto}
+.card{position:absolute;inset:0;background:var(--card);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;touch-action:pan-y;will-change:transform;transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s}
+.card.back{transform:scale(.96) translateY(10px);opacity:.6;pointer-events:none}
+.card.drag{transition:none}
+.media{flex:0 0 auto;width:100%;max-height:66%;background:#000;position:relative;overflow:hidden;touch-action:none}
+.media video,.media img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+.snd{position:absolute;right:10px;bottom:10px;width:32px;height:32px;border-radius:16px;background:rgba(0,0,0,.55);display:grid;place-items:center}
+.snd svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2}
+.txt{flex:1;min-height:0;overflow:auto;padding:14px 16px 16px;-webkit-overflow-scrolling:touch}
+.cap{font-size:18px;line-height:1.35;margin:0 0 10px}
+.meta{font-size:13px;color:var(--mu)}
+.more{margin-top:10px;font-size:13px;color:var(--mu);display:none}
+.more.on{display:block}
+.more p{margin:6px 0}
+.tag{display:inline-block;font-size:12px;color:#0a0a0a;background:var(--fg);border-radius:6px;padding:1px 6px;margin-right:6px}
+.stamp{position:absolute;top:18px;padding:6px 12px;border-radius:10px;font-weight:700;font-size:20px;letter-spacing:.5px;opacity:0;border:2px solid}
+.stamp.l{right:18px;color:var(--no);border-color:var(--no);transform:rotate(8deg)}
+.stamp.r{left:18px;color:var(--go);border-color:var(--go);transform:rotate(-8deg)}
+.stamp.u{top:auto;bottom:18px;left:50%;color:#93c5fd;border-color:#93c5fd;transform:translateX(-50%)}
+footer{display:flex;justify-content:center;gap:20px;padding:12px 0 10px}
+.act{width:58px;height:58px;border-radius:29px;border:1px solid var(--ln);background:#111;display:grid;place-items:center}
+.act:active{transform:scale(.94)}
+.act svg{width:24px;height:24px;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.act.no svg{stroke:var(--no)} .act.ed svg{stroke:var(--ed);width:21px;height:21px} .act.go svg{stroke:var(--go)}
+.act.ed,.act.lt{width:48px;height:48px;align-self:center}
+.act.lt svg{stroke:#93c5fd;width:21px;height:21px}
+.empty{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--mu);text-align:center;padding:24px}
+.empty b{color:var(--fg);font-size:18px;font-weight:600}
+.pill{border:1px solid #2a2a2a;border-radius:22px;padding:10px 18px;color:var(--fg)}
+.hint{position:absolute;z-index:5;left:0;right:0;bottom:14px;text-align:center;font-size:13px;color:var(--mu);pointer-events:none}
+/* sheets */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s;z-index:10}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:11;background:#141414;border-radius:18px 18px 0 0;padding:8px 16px calc(16px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .25s cubic-bezier(.2,.8,.2,1);max-height:88dvh;display:flex;flex-direction:column}
+.sheet.on{transform:none}
+.grab{width:36px;height:4px;border-radius:2px;background:#333;margin:2px auto 10px}
+.sheet h2{font-size:17px;font-weight:600;margin:0 0 12px;display:flex;align-items:center}
+.sheet h2 .x{margin-left:auto;color:var(--mu);font-weight:400;font-size:15px}
+textarea{width:100%;background:#0d0d0d;border:1px solid #262626;border-radius:12px;color:var(--fg);font:inherit;font-size:17px;padding:12px;resize:none;min-height:110px;outline:none}
+textarea{-webkit-appearance:none;appearance:none;-webkit-user-select:text;user-select:text;touch-action:manipulation}
+textarea:focus{border-color:#3a3a3a}
+.count{font-size:12px;color:var(--mu);text-align:right;margin:4px 2px 0}
+.count.over{color:var(--no)}
+.chips{display:flex;gap:8px;overflow-x:auto;margin:10px -16px 0;padding:0 16px 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;max-width:78%;border:1px solid #2a2a2a;border-radius:14px;padding:8px 12px;font-size:14px;color:#cfcfcf;text-align:left;white-space:normal}
+.seg{display:flex;background:#0d0d0d;border:1px solid #262626;border-radius:12px;padding:3px;margin-top:14px}
+.seg button{flex:1;padding:9px 0;border-radius:9px;color:var(--mu);font-size:15px}
+.seg button.on{background:#262626;color:var(--fg)}
+/* reference images on edit and batch requests */
+.refs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.ref{width:64px;height:64px;border-radius:10px;overflow:hidden;position:relative;background:#0d0d0d;border:1px solid #262626;flex:0 0 auto}
+.ref img{width:100%;height:100%;object-fit:cover;display:block}
+.ref.busy img{opacity:.35}
+.ref.busy::after{content:'';position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px;border:2px solid #555;border-top-color:var(--fg);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(1turn)}}
+.ref .rm{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:10px;background:rgba(0,0,0,.7);color:#fff;font-size:13px;line-height:20px;text-align:center}
+.addref{width:64px;height:64px;border-radius:10px;border:1px dashed #3a3a3a;display:grid;place-items:center;color:var(--mu);font-size:12px;text-align:center;cursor:pointer;flex:0 0 auto}
+.addref svg{width:22px;height:22px;stroke:var(--mu);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block;margin:0 auto 2px}
+.addref input{display:none}
+input[type=datetime-local]{width:100%;margin-top:10px;background:#0d0d0d;border:1px solid #262626;border-radius:12px;color:var(--fg);font:inherit;padding:12px;color-scheme:dark}
+.primary{width:100%;margin-top:14px;padding:15px;border-radius:14px;background:var(--fg);color:#0a0a0a;font-weight:600;font-size:16px}
+.primary:disabled{opacity:.4}
+.stepper{display:flex;align-items:center;gap:14px;margin-top:14px;color:var(--mu);font-size:15px}
+.stepper b{color:var(--fg);font-size:20px;min-width:28px;text-align:center}
+.stepper button{width:38px;height:38px;border-radius:19px;border:1px solid #2a2a2a;font-size:20px;color:var(--fg)}
+.list{overflow:auto;margin:0 -16px;padding:0 16px}
+.sec{font-size:12px;color:var(--mu);text-transform:uppercase;letter-spacing:.6px;margin:14px 0 6px}
+.row{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #1c1c1c}
+.row img{width:46px;height:46px;border-radius:8px;object-fit:cover;background:#000;flex:0 0 auto}
+.row .ic{width:46px;height:46px;border-radius:8px;background:#1b1b1b;display:grid;place-items:center;flex:0 0 auto;color:var(--mu);font-size:18px}
+.row .b{flex:1;min-width:0}
+.row .t{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .s{font-size:13px;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .s.bad{color:var(--no)}
+.row .a{font-size:14px;color:var(--fg);border:1px solid #2a2a2a;border-radius:14px;padding:6px 12px;flex:0 0 auto}
+.row a.a{text-decoration:none}
+.row .a:disabled{opacity:.4}
+.more2{display:block;margin:14px auto 4px}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:#1f1f1f;border-radius:22px;padding:10px 8px 10px 16px;display:flex;gap:12px;align-items:center;font-size:15px;opacity:0;pointer-events:none;transition:.2s;z-index:20;white-space:nowrap}
+.toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast button{color:#93c5fd;font-weight:600;padding:2px 10px}
+.toast:not(.u) button{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>Feed<span id="n"></span></h1>
+  <button class="ib" id="bSkipped" aria-label="Skipped"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+  <button class="ib" id="bBatch" aria-label="Request a batch"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button class="ib" id="bAct" aria-label="Activity"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg><i class="dot" id="actDot" hidden></i></button>
+</header>
+<div id="warn"></div>
+<main id="stack">
+  <div class="empty" id="empty"><b>All caught up</b><span>Nothing new to review.</span><button class="pill" id="bBatch2">Request a batch</button><button class="pill" id="bSkipped2">View skipped</button></div>
+  <div class="hint" id="hint" hidden>Swipe right to post · left to skip · up for later</div>
+</main>
+<footer id="acts">
+  <button class="act no" id="fNo" aria-label="Skip"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <button class="act lt" id="fLater" aria-label="Later"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></button>
+  <button class="act ed" id="fEd" aria-label="Needs edits"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg></button>
+  <button class="act go" id="fGo" aria-label="Post"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+</footer>
+
+<div class="scrim" id="scrim"></div>
+<section class="sheet" id="shPost">
+  <div class="grab"></div>
+  <h2>Post to X<button class="x" data-close>Cancel</button></h2>
+  <textarea id="pCap" autocomplete="off" autocapitalize="sentences" spellcheck="true" enterkeyhint="enter" rows="3" placeholder="Caption"></textarea>
+  <div class="count" id="pCount"></div>
+  <div class="chips" id="pChips"></div>
+  <div class="seg" id="pWhen"><button data-w="now" class="on">Now</button><button data-w="later">Schedule</button></div>
+  <input type="datetime-local" id="pAt" hidden>
+  <button class="primary" id="pGo">Post now</button>
+</section>
+<section class="sheet" id="shEdit">
+  <div class="grab"></div>
+  <h2>What should change?<button class="x" data-close>Cancel</button></h2>
+  <textarea id="eTxt" autocomplete="off" autocapitalize="sentences" spellcheck="true" enterkeyhint="enter" rows="4" placeholder="e.g. drop Grok, make the title shorter, use a dark background"></textarea>
+  <div class="refs" id="eRefs"></div>
+  <button class="primary" id="eGo">Send to your agent</button>
+</section>
+<section class="sheet" id="shBatch">
+  <div class="grab"></div>
+  <h2>New batch<button class="x" data-close>Cancel</button></h2>
+  <textarea id="bTxt" autocomplete="off" autocapitalize="sentences" spellcheck="true" enterkeyhint="enter" rows="4" placeholder="What should the ideas be about? Leave blank to let Claude pick."></textarea>
+  <div class="refs" id="bRefs"></div>
+  <div class="stepper"><span>Renders</span><button id="bMinus" aria-label="Fewer">−</button><b id="bN">10</b><button id="bPlus" aria-label="More">+</button></div>
+  <button class="primary" id="bGo">Send to your agent</button>
+</section>
+<section class="sheet" id="shAct">
+  <div class="grab"></div>
+  <h2>Activity<button class="x" data-close>Done</button></h2>
+  <div class="list" id="actList"></div>
+</section>
+<section class="sheet" id="shSkip">
+  <div class="grab"></div>
+  <h2>Skipped<button class="x" data-close>Done</button></h2>
+  <div class="list" id="skipList"></div>
+</section>
+<div class="toast" id="toast"><span id="toastT"></span><button id="toastU">Undo</button></div>
+
+<script>
+const $ = s => document.querySelector(s);
+let ITEMS = [], idx = 0, current = null, sheetOpen = null, toastTimer = 0, undoFn = null, when = 'now', batchN = 10;
+let feedSig = null, reqSig = null, wantMerge = false, merging = false, busy = false; const handled = new Map();
+
+async function api(p, b) {
+  const r = await fetch(p, b ? {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify(b)} : {});
+  if (r.status === 401) { location.href = '/signin-with-chatgpt?return_to=/'; throw new Error('sign in'); }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || 'Request failed');
+  return j;
+}
+function toast(t, undo) {
+  $('#toastT').textContent = t; undoFn = undo || null;
+  $('#toast').classList.toggle('u', !!undo); $('#toast').classList.add('on');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('#toast').classList.remove('on'); undoFn = null; }, undo ? 5000 : 2600);
+}
+$('#toastU').onclick = () => { const f = undoFn; $('#toast').classList.remove('on'); undoFn = null; f && f(); };
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const fmtTime = iso => { const d = new Date(iso), t = new Date(); const day = d.toDateString() === t.toDateString() ? 'Today' : d.toLocaleDateString([], {weekday: 'short', month: 'short', day: 'numeric', ...(d.getFullYear() !== t.getFullYear() ? {year: 'numeric'} : {})}); return day + ' ' + d.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'}); };
+const ago = iso => { const m = (Date.now() - new Date(iso)) / 60000; return m < 1 ? 'just now' : m < 60 ? Math.round(m) + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; };
+
+// ---------- feed ----------
+async function load() {
+  try {
+    const d = await api('/api/feed');
+    ITEMS = d.items; idx = 0;
+    showStatus(d);
+    render();
+  } catch (e) { if (e.message !== 'sign in') toast(e.message); }
+}
+function showStatus(d) {
+  const stale = !d.agent || Date.now() - new Date(d.agent.at) > 10 * 60000;
+  $('#warn').style.display = stale ? 'block' : 'none';
+  $('#warn').textContent = d.agent ? `Your agent last checked in ${ago(d.agent.at)}. Requests will wait until it's back.` : 'Your agent has not checked in yet.';
+  $('#actDot').hidden = !d.open; $('#actDot').classList.toggle('bad', d.failed > 0);
+}
+// Live updates: new and re-rendered pieces appear without a reload. The front card stays put; merges wait during a drag, swipe or open sheet.
+const midAction = () => busy || sheetOpen || (current && current.classList.contains('drag'));
+async function mergeFeed() {
+  if (midAction() || merging) { wantMerge = true; return; }
+  merging = true; wantMerge = false;
+  try {
+    const d = await api('/api/feed');
+    if (midAction()) { wantMerge = true; return; }
+    const t = Date.now(); handled.forEach((at, id) => { if (t - at > 20000) handled.delete(id); });
+    const was = ITEMS[idx], wasNext = ITEMS[idx + 1], list = d.items.filter(x => !handled.has(x.id));
+    const cur = was && list.find(x => x.id === was.id);
+    ITEMS = cur ? [cur, ...list.filter(x => x !== cur)] : list; idx = 0;
+    showStatus(d);
+    const sameCur = cur && cur.version === was.version && current, next = ITEMS[1];
+    if (!sameCur) return render();
+    $('#n').textContent = String(ITEMS.length);
+    if ((next && next.id) === (wasNext && wasNext.id) && (next && next.version) === (wasNext && wasNext.version)) return;
+    document.querySelectorAll('.card.back').forEach(c => c.remove());
+    if (next) { const b = cardEl(next); b.classList.add('back'); $('#stack').prepend(b); }
+  } catch {} finally { merging = false; }
+}
+async function pulse() {
+  if (document.hidden) return;
+  try {
+    const r = await fetch('/api/pulse'); if (!r.ok) return;
+    const d = await r.json(); showStatus(d);
+    if (reqSig !== null && d.reqs !== reqSig && sheetOpen === '#shAct') openAct();
+    reqSig = d.reqs;
+    if (feedSig !== null && d.feed !== feedSig) await mergeFeed();
+    feedSig = d.feed;
+    if (wantMerge) mergeFeed();
+  } catch {}
+}
+function cardEl(it) {
+  const c = document.createElement('div'); c.className = 'card';
+  const ratio = it.aspect ? 1 / it.aspect : 1;
+  const media = it.kind === 'video'
+    ? `<video src="${it.media}" poster="${it.thumb || ''}" muted loop playsinline preload="metadata"></video><button class="snd" aria-label="Sound"><svg viewBox="0 0 24 24"><path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M16 9l5 6M21 9l-5 6"/></svg></button>`
+    : `<img src="${it.media}" alt="">`;
+  const extra = [it.numbers && `<p>${esc(it.numbers)}</p>`, it.source && `<p>Source: ${esc(it.source)}</p>`, ...(it.alts || []).map(a => `<p>“${esc(a)}”</p>`)].filter(Boolean).join('');
+  c.innerHTML = `<div class="media" style="aspect-ratio:${ratio}">${media}<div class="stamp r">POST</div><div class="stamp l">SKIP</div><div class="stamp u">LATER</div></div>
+    <div class="txt"><p class="cap">${esc(it.caption || it.title)}</p>
+    <div class="meta">${it.edited ? '<span class="tag">Updated</span>' : ''}${it.deferred ? '<span class="tag">Later</span>' : ''}#${esc(it.num ?? '')} · ${esc(it.title || '')}${extra ? ' · <button class="mb" style="color:inherit;text-decoration:underline">details</button>' : ''}</div>
+    <div class="more">${extra}</div></div>`;
+  const mb = c.querySelector('.mb'); if (mb) mb.onclick = e => { e.stopPropagation(); c.querySelector('.more').classList.toggle('on'); };
+  const v = c.querySelector('video'), s = c.querySelector('.snd');
+  if (s) s.onclick = e => { e.stopPropagation(); v.muted = !v.muted; s.style.opacity = v.muted ? 1 : .5; };
+  return c;
+}
+function render() {
+  document.querySelectorAll('.card').forEach(c => c.remove());
+  const left = ITEMS.length - idx;
+  $('#n').textContent = left ? String(left) : '';
+  $('#empty').style.display = left ? 'none' : 'flex';
+  $('#acts').style.visibility = left ? 'visible' : 'hidden';
+  $('#hint').hidden = !left || localStorage.getItem('feed.hint') === '1';
+  current = null;
+  if (!left) return;
+  const next = ITEMS[idx + 1];
+  if (next) { const b = cardEl(next); b.classList.add('back'); $('#stack').prepend(b); }
+  current = cardEl(ITEMS[idx]); $('#stack').appendChild(current);
+  const v = current.querySelector('video'); if (v) v.play().catch(() => {});
+  attachDrag(current);
+}
+function advance(dir) {
+  const c = current; if (!c) return;
+  c.style.transform = dir === 'up' ? 'translateY(-115%)' : `translateX(${dir * 130}%) rotate(${dir * 18}deg)`; c.style.opacity = 0;
+  localStorage.setItem('feed.hint', '1');
+  const it = ITEMS[idx]; if (it) handled.set(it.id, Date.now());
+  busy = true; idx++; setTimeout(() => { busy = false; render(); if (wantMerge) mergeFeed(); }, 230);
+}
+function snapBack() { if (!current) return; current.style.transform = ''; current.querySelectorAll('.stamp').forEach(s => s.style.opacity = 0); }
+
+// ---------- swipe ----------
+function attachDrag(c) {
+  // horiz: true = left/right (skip/post), false = vertical; up = vertical drag that began on the media (Later). Text still scrolls.
+  let x0 = 0, y0 = 0, dx = 0, dy = 0, on = false, horiz = null, up = false, inMedia = false, id = null;
+  c.addEventListener('pointerdown', e => {
+    if (e.target.closest('button,a,.more')) return;
+    x0 = e.clientX; y0 = e.clientY; dx = 0; dy = 0; on = true; horiz = null; up = false; id = e.pointerId; inMedia = !!e.target.closest('.media');
+  });
+  c.addEventListener('pointermove', e => {
+    if (!on || e.pointerId !== id) return;
+    const ddx = e.clientX - x0, ddy = e.clientY - y0;
+    if (horiz === null && Math.hypot(ddx, ddy) > 8) {
+      horiz = Math.abs(ddx) > Math.abs(ddy); up = !horiz && inMedia && ddy < 0;
+      if (horiz || up) { c.setPointerCapture(id); c.classList.add('drag'); }
+    }
+    if (up) {
+      dy = Math.min(0, ddy);
+      c.style.transform = `translateY(${dy}px)`;
+      c.querySelector('.stamp.u').style.opacity = Math.max(0, Math.min(1, -dy / 80));
+      return;
+    }
+    if (!horiz) return;
+    dx = ddx;
+    c.style.transform = `translateX(${dx}px) rotate(${dx / 22}deg)`;
+    c.querySelector('.stamp.r').style.opacity = Math.max(0, Math.min(1, dx / 70));
+    c.querySelector('.stamp.l').style.opacity = Math.max(0, Math.min(1, -dx / 70));
+  });
+  const end = () => {
+    if (!on) return; on = false; c.classList.remove('drag');
+    if (up) { if (dy < -80) later(); else snapBack(); return; }
+    if (!horiz) return;
+    if (dx > 70) openPost(); else if (dx < -70) skip(); else snapBack();
+  };
+  c.addEventListener('pointerup', end); c.addEventListener('pointercancel', end);
+}
+
+// ---------- actions ----------
+async function skip() {
+  const it = ITEMS[idx]; if (!it) return;
+  advance(-1);
+  try { await api('/api/decide', {id: it.id, action: 'pass'}); toast('Skipped', () => undoTo(it)); }
+  catch (e) { toast(e.message); }
+}
+async function undoTo(it) {
+  try { await api('/api/decide', {id: it.id, action: 'undo'}); handled.delete(it.id); it.deferred = null; ITEMS.splice(idx, 0, it); render(); }
+  catch (e) { toast(e.message); }
+}
+// Later: card goes to the back of the queue without a decision (saved on the server, so the order holds across reloads and devices)
+async function later() {
+  const it = ITEMS[idx]; if (!it) return;
+  if (ITEMS.length - idx < 2) { snapBack(); toast('Nothing else in the queue'); return; }
+  const prev = it.deferred;
+  advance('up'); idx--; ITEMS.splice(idx, 1); ITEMS.push(it); // advance() stepped past it; instead move it to the end
+  handled.delete(it.id);
+  try {
+    const r = await api('/api/defer', {id: it.id});
+    it.deferred = r.deferred;
+    toast('Moved to the back', () => undoLater(it, prev));
+  } catch (e) { toast(e.message); }
+}
+async function undoLater(it, prev) {
+  const k = ITEMS.indexOf(it, idx); if (k < 0) return;
+  try {
+    await api('/api/defer', {id: it.id, undo: true, prev});
+    it.deferred = prev || null; ITEMS.splice(k, 1); ITEMS.splice(idx, 0, it); render();
+  } catch (e) { toast(e.message); }
+}
+// ---------- skipped ----------
+let SKIPPED = [], skipTotal = 0;
+async function openSkipped(more) {
+  if (!more) { closeSheet(); SKIPPED = []; openSheet('#shSkip'); $('#skipList').innerHTML = '<div class="sec">Loading…</div>'; }
+  try {
+    const d = await api('/api/skipped?offset=' + SKIPPED.length);
+    SKIPPED.push(...d.items); skipTotal = d.total; drawSkipped();
+  } catch (e) { $('#skipList').innerHTML = `<div class="sec">${esc(e.message)}</div>`; }
+}
+function drawSkipped() {
+  const rows = SKIPPED.map((it, i) => `<div class="row">${it.thumb ? `<img src="${it.thumb}" alt="">` : '<div class="ic">#</div>'}<div class="b"><div class="t">${esc(it.caption || it.title)}</div>
+    <div class="s">#${esc(it.num ?? '')} · ${it.restored ? 'Back in the feed' : 'skipped ' + ago(it.skippedAt)}</div></div>
+    <button class="a" data-i="${i}"${it.restored ? ' disabled' : ''}>${it.restored ? 'Restored' : 'Restore'}</button></div>`).join('');
+  $('#skipList').innerHTML = SKIPPED.length ? `<div class="sec">${skipTotal} skipped · newest first</div>` + rows + (SKIPPED.length < skipTotal ? '<button class="pill more2" id="skipMore">Show more</button>' : '') : '<div class="sec">Nothing skipped</div>';
+  $('#skipList').querySelectorAll('button[data-i]').forEach(b => b.onclick = () => restore(SKIPPED[+b.dataset.i], b));
+  const m = $('#skipMore'); if (m) m.onclick = () => { m.disabled = true; openSkipped(true); };
+}
+async function restore(it, btn) {
+  if (!it || it.restored) return;
+  btn.disabled = true;
+  try {
+    const r = await api('/api/restore', {id: it.id});
+    it.restored = true; drawSkipped();
+    // shows up as the current card right away
+    const back = {...it, ...(r.item || {}), deferred: null}; ITEMS = ITEMS.filter(x => x.id !== back.id); ITEMS.splice(idx, 0, back); render();
+    toast(`#${it.num ?? ''} is back in the feed`);
+  } catch (e) { btn.disabled = false; toast(e.message); }
+}
+function openSheet(id) {
+  $('#toast').classList.remove('on'); clearTimeout(toastTimer);
+  sheetOpen = id; $('#scrim').classList.add('on'); $(id).classList.add('on');
+}
+function closeSheet(keepCard) {
+  if (!sheetOpen) return;
+  $(sheetOpen).classList.remove('on'); $('#scrim').classList.remove('on'); sheetOpen = null;
+  document.activeElement && document.activeElement.blur();
+  if (!keepCard) snapBack();
+  if (wantMerge) setTimeout(mergeFeed, 300);
+}
+$('#scrim').onclick = () => closeSheet();
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => closeSheet());
+
+function nextHour() { const d = new Date(Date.now() + 3600e3); d.setMinutes(0, 0, 0); const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:00`; }
+function setWhen(w) {
+  when = w; document.querySelectorAll('#pWhen button').forEach(b => b.classList.toggle('on', b.dataset.w === w));
+  $('#pAt').hidden = w !== 'later'; if (w === 'later' && !$('#pAt').value) $('#pAt').value = nextHour();
+  updPostBtn();
+}
+function updPostBtn() {
+  const n = $('#pCap').value.trim().length;
+  // X Premium allows up to 25,000 chars: show the count past 280, block only past X's own cap.
+  $('#pCount').textContent = n > 280 ? `${n} chars` : ''; $('#pCount').classList.toggle('over', n > 25000);
+  $('#pGo').disabled = !n || n > 25000 || (when === 'later' && !$('#pAt').value);
+  $('#pGo').textContent = when === 'later' && $('#pAt').value ? 'Schedule for ' + fmtTime(new Date($('#pAt').value).toISOString()) : 'Post now';
+}
+document.querySelectorAll('#pWhen button').forEach(b => b.onclick = () => setWhen(b.dataset.w));
+$('#pCap').oninput = updPostBtn; $('#pAt').oninput = updPostBtn;
+function openPost() {
+  const it = ITEMS[idx]; if (!it) return;
+  if (current) current.style.transform = 'translateX(60px) rotate(3deg)';
+  $('#pCap').value = it.caption || '';
+  const opts = [...new Set((it.alts || []).filter(a => a && a !== it.caption))];
+  $('#pChips').innerHTML = opts.length ? opts.map((o, i) => `<button class="chip" data-i="${i}">${esc(o)}</button>`).join('') : '';
+  $('#pChips').querySelectorAll('.chip').forEach(b => b.onclick = () => { $('#pCap').value = opts[+b.dataset.i]; updPostBtn(); });
+  setWhen('now'); openSheet('#shPost');
+}
+$('#pGo').onclick = async () => {
+  const it = ITEMS[idx]; if (!it) return;
+  const caption = $('#pCap').value.trim(), scheduleAt = when === 'later' ? new Date($('#pAt').value).toISOString() : null;
+  $('#pGo').disabled = true;
+  try {
+    await api('/api/decide', {id: it.id, action: 'post', caption, scheduleAt});
+    closeSheet(true); advance(1);
+    toast(scheduleAt ? 'Scheduled ' + fmtTime(scheduleAt) : 'Posting…', () => undoTo(it));
+    refreshDot();
+  } catch (e) { toast(e.message); $('#pGo').disabled = false; }
+};
+// ---------- reference images ----------
+const REFS = {e: [], b: []};
+// phone photos are big: scale to 2400 px on the long side as JPEG before upload; small files and GIFs go as is
+async function shrink(f) {
+  if (f.type === 'image/gif' || (f.size < 1.5e6 && /^image\/(jpeg|png|webp)$/.test(f.type))) return f;
+  try {
+    const bmp = await createImageBitmap(f), s = Math.min(1, 2400 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas'); c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    return await new Promise(res => c.toBlob(b => res(b || f), 'image/jpeg', 0.9));
+  } catch { return f; }
+}
+async function uploadRef(pre, f) {
+  const r = {key: null, url: URL.createObjectURL(f), busy: true}; REFS[pre].push(r); drawRefs(pre);
+  try {
+    const blob = await shrink(f);
+    const res = await fetch('/api/upload', {method: 'POST', headers: {'content-type': blob.type || f.type || 'image/jpeg'}, body: blob});
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(j.error || 'Upload failed');
+    r.key = j.key; r.busy = false;
+  } catch (e) { REFS[pre] = REFS[pre].filter(x => x !== r); toast(e.message); }
+  drawRefs(pre);
+}
+function drawRefs(pre) {
+  const box = $('#' + pre + 'Refs'), list = REFS[pre];
+  box.innerHTML = list.map((r, i) => `<div class="ref${r.busy ? ' busy' : ''}"><img src="${r.url}" alt=""><button class="rm" data-i="${i}" aria-label="Remove">×</button></div>`).join('') +
+    (list.length < 8 ? `<label class="addref"><input type="file" accept="image/*" multiple><span><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg>Image</span></label>` : '');
+  box.querySelectorAll('.rm').forEach(b => b.onclick = () => { list.splice(+b.dataset.i, 1); drawRefs(pre); });
+  const inp = box.querySelector('input'); if (inp) inp.onchange = () => { [...inp.files].slice(0, 8 - list.length).forEach(f => uploadRef(pre, f)); };
+  const go = $(pre === 'e' ? '#eGo' : '#bGo'); go.disabled = list.some(r => r.busy);
+}
+const refKeys = pre => REFS[pre].filter(r => r.key).map(r => r.key);
+function resetRefs(pre) { REFS[pre] = []; drawRefs(pre); }
+
+function openEdit() {
+  if (!ITEMS[idx]) return; $('#eTxt').value = ''; resetRefs('e'); openSheet('#shEdit'); setTimeout(() => $('#eTxt').focus({preventScroll: true}), 320);
+}
+$('#eGo').onclick = async () => {
+  const it = ITEMS[idx], note = $('#eTxt').value.trim(), images = refKeys('e'); if (!it || (!note && !images.length)) return;
+  $('#eGo').disabled = true;
+  try { await api('/api/decide', {id: it.id, action: 'edit', note, images}); closeSheet(true); advance(1); toast('Sent to your agent', () => undoTo(it)); refreshDot(); resetRefs('e'); }
+  catch (e) { toast(e.message); }
+  $('#eGo').disabled = false;
+};
+function openBatch() { closeSheet(); $('#bTxt').value = ''; resetRefs('b'); $('#bN').textContent = batchN; openSheet('#shBatch'); }
+$('#bMinus').onclick = () => { batchN = Math.max(1, batchN - (batchN > 10 ? 5 : 1)); $('#bN').textContent = batchN; };
+$('#bPlus').onclick = () => { batchN = Math.min(40, batchN + (batchN >= 10 ? 5 : 1)); $('#bN').textContent = batchN; };
+$('#bGo').onclick = async () => {
+  $('#bGo').disabled = true;
+  try { await api('/api/batch', {text: $('#bTxt').value.trim(), count: batchN, images: refKeys('b')}); closeSheet(); toast('Batch requested'); refreshDot(); resetRefs('b'); }
+  catch (e) { toast(e.message); }
+  $('#bGo').disabled = false;
+};
+$('#fNo').onclick = skip; $('#fEd').onclick = openEdit; $('#fGo').onclick = openPost; $('#fLater').onclick = later;
+$('#bSkipped').onclick = () => openSkipped(); $('#bSkipped2').onclick = () => openSkipped();
+$('#bBatch').onclick = openBatch; $('#bBatch2').onclick = openBatch;
+
+// ---------- activity ----------
+const LABEL = {
+  post: {queued: 'Posting soon', scheduled: 'Scheduled', claimed: 'Posting…', posting: 'Posting…', posted: 'Posted', done: 'Posted', failed: 'Failed'},
+  edit: {queued: 'Waiting for your agent', claimed: 'Sending to your agent', sent: 'Sent to your agent', working: 'Your agent is reworking it', done: 'Updated', failed: 'Failed'},
+  batch: {queued: 'Waiting for your agent', claimed: 'Sending to your agent', sent: 'Sent to your agent', working: 'Your agent is working on it', done: 'Done', failed: 'Failed'},
+};
+async function refreshDot() { try { const d = await api('/api/feed'); $('#actDot').hidden = !d.open; $('#actDot').classList.toggle('bad', d.failed > 0); } catch {} }
+async function openAct() {
+  openSheet('#shAct'); $('#actList').innerHTML = '<div class="sec">Loading…</div>';
+  try {
+    const {requests} = await api('/api/activity');
+    const isLater = r => r.kind === 'post' && r.status === 'queued' && new Date(r.runAt) > Date.now() + 60000;
+    const groups = [['Needs attention', r => r.status === 'failed'], ['Scheduled', isLater], ['In progress', r => !isLater(r) && !['done', 'posted', 'failed'].includes(r.status)], ['Done', r => ['done', 'posted'].includes(r.status)]];
+    let html = '';
+    for (const [name, f] of groups) {
+      const rs = requests.filter(f); if (!rs.length) continue;
+      html += `<div class="sec">${name}</div>` + rs.slice(0, name === 'Done' ? 25 : 50).map(row).join('');
+    }
+    $('#actList').innerHTML = html || '<div class="sec">Nothing yet</div>';
+    $('#actList').querySelectorAll('[data-act]').forEach(b => b.onclick = () => reqAction(b.dataset.id, b.dataset.act));
+  } catch (e) { $('#actList').innerHTML = `<div class="sec">${esc(e.message)}</div>`; }
+}
+function row(r) {
+  const st = isFinite(new Date(r.runAt)) && r.kind === 'post' && r.status === 'queued' && new Date(r.runAt) > Date.now() + 60000 ? 'Scheduled ' + fmtTime(r.runAt) : (LABEL[r.kind] || {})[r.status] || r.status;
+  const title = r.kind === 'batch' ? `Batch of ${r.payload.count || 10}${r.payload.text ? ': ' + r.payload.text : ''}` : r.kind === 'edit' ? `Edit #${r.num}: ${r.payload.text || ''}` : (r.payload.caption || r.title || '');
+  const ni = (r.payload.images || []).length, imgs = ni ? `${ni} image${ni > 1 ? 's' : ''} · ` : '';
+  const sub = imgs + (r.status === 'failed' ? (r.result || 'Failed') : r.status === 'done' && r.result ? `${st} · ${r.result}` : `${st} · ${ago(r.updated)}`);
+  let a = '';
+  if (r.kind === 'post' && r.url) a = `<a class="a" href="${esc(r.url)}" target="_blank" rel="noopener">View</a>`;
+  else if (r.status === 'failed') a = `<button class="a" data-act="retry" data-id="${r.id}">Retry</button>`;
+  else if (r.status === 'queued') a = `<button class="a" data-act="cancel" data-id="${r.id}">Cancel</button>`;
+  const pic = r.thumb ? `<img src="${r.thumb}" alt="">` : `<div class="ic">${r.kind === 'batch' ? '+' : '✎'}</div>`;
+  return `<div class="row">${pic}<div class="b"><div class="t">${esc(title)}</div><div class="s${r.status === 'failed' ? ' bad' : ''}">${esc(sub)}</div></div>${a}</div>`;
+}
+async function reqAction(id, action) {
+  try { await api('/api/request', {id, action}); toast(action === 'cancel' ? 'Canceled' : 'Retrying'); if (action === 'cancel') load(); openAct(); refreshDot(); }
+  catch (e) { toast(e.message); }
+}
+$('#bAct').onclick = openAct;
+
+document.addEventListener('visibilitychange', () => { if (!document.hidden) pulse(); });
+setInterval(pulse, 3000);
+setInterval(() => { if (!document.hidden && sheetOpen === '#shAct') openAct(); }, 30000);
+load().then(pulse);
+</script>
+</body>
+</html>

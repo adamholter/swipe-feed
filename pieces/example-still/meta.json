@@ -1,0 +1,11 @@
+{
+ "num": 0,
+ "title": "Example draft",
+ "caption": "Your first draft shows up like this. Swipe it away.",
+ "alts": [
+  "Or use this caption instead"
+ ],
+ "kind": "still",
+ "aspect": 1,
+ "media": "output/poster.png"
+}

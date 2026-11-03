@@ -1,0 +1,19 @@
+# For plain Cloudflare Workers. Copy to wrangler.toml and fill in the ids.
+name = "swipe-feed"
+main = "dist/server/index.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+AUTH_MODE = "cloudflare-access"
+OWNER_EMAIL = "you@example.com"
+# wrangler secret put AGENT_TOKEN
+
+[[d1_databases]]
+binding = "DB"
+database_name = "swipe-feed"
+database_id = "your-d1-id"
+migrations_dir = "drizzle"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "swipe-feed-media"
