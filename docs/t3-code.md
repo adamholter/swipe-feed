@@ -30,6 +30,7 @@ Requested count (batch only): {{body.count}}
 How to handle it:
 - First run `node /PATH/swipe-feed/agent/ack.mjs {{body.id}} working` so the app shows progress. If this request id was already handled in this thread, ack it done and stop.
 - edit: change that piece, re-render it, check the result, and update meta.json if I gave a caption. Then run `node /PATH/swipe-feed/agent/feed.mjs publish {{body.piece}}`.
+- edit where Piece is "thread": my text names the thread id and the two commands to read and save it. Keep my own edits to the thread.
 - batch: follow my content skill. Make the requested number of drafts (10 if blank). Run feed.mjs publish on each one as soon as it's finished, without waiting for the whole batch.
 - Finish with `node /PATH/swipe-feed/agent/ack.mjs {{body.id}} done "<one-line summary>"`, or `failed "<reason>"`.
 Keep the reply in this thread to a few lines.
@@ -42,6 +43,8 @@ Publishing each piece as it finishes matters: with live updates, drafts appear w
 ```json
 {"id": "request uuid", "kind": "edit", "piece": 42, "title": "Draft title", "text": "Your note, plus paths to any reference images", "count": ""}
 ```
+
+For an edit to a drafted thread, `piece` is `"thread"` and the text ends with the thread id and the `feed.mjs thread get` and `thread put` commands to use.
 
 A failed webhook call puts the request back in the queue, so it retries on the next tick.
 

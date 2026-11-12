@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { execFileSync } from 'node:child_process';
 import { run, FEED, LOG_DIR, POST_MODEL } from './lib.mjs';
 const [media, capFile, flag] = process.argv.slice(2);
 const dry = flag === '--dry-run';
@@ -23,7 +24,7 @@ Connect: in the Node REPL js tool (mcp__node_repl__js) run
 Rules:
 - Work in ONE background tab that you open yourself with chrome.tabs.new() (url https://www.linkedin.com/feed/?feedli=1). Never claim, focus, navigate or close the owner's own tabs or windows, never make the browser visible, never create more than one tab, and close your tab when finished.
 - The owner is already signed in. If LinkedIn shows a login/checkpoint page, stop and report {"ok":false,"posted":false,"error":"not signed in"}.
-- FIRST open his profile activity (https://www.linkedin.com/in/me/recent-activity/all/) and look at their newest ~6 posts: if one already starts with the same first 100 characters as the caption below, do NOT post; answer {"ok":true,"url":"<its url or null>","note":"already posted"}.
+- FIRST open their profile activity (https://www.linkedin.com/in/me/recent-activity/all/) and look at their newest ~6 posts: if one already starts with the same first 100 characters as the caption below, do NOT post; answer {"ok":true,"url":"<its url or null>","note":"already posted"}.
 - Then click "Start a post" on the feed, attach the video file (use the media/photo button, then a file chooser: start const p = tab.playwright.waitForEvent("filechooser", {timeoutMs: 20000}) before clicking, then (await p).setFiles([path])), click Next/Done in the media editor if shown, and enter the caption exactly. Do NOT use fill(): it looks right in the editor but LinkedIn publishes blank lines as a single line break. Type it with the keyboard, using these lines: const lines = ${JSON.stringify(caption.split('\n'))}; click the editor, then for each line i: if it is non-empty await box.pressSequentially(line); if i is not the last, await box.press("Enter"). A blank line means Enter twice. Verify before posting: [...editor.querySelectorAll("p")].map(p => p.innerText.trim()) must equal lines exactly, with one empty paragraph per blank line; if not, clear the editor and retype. Add nothing: no hashtags, no extra text.
 - Wait for the video upload to finish, then click Post at most once in total, ever. If anything is unclear after clicking Post, check the recent-activity page and report; never click Post a second time.
 - Media file: ${media}
@@ -35,6 +36,11 @@ Final answer: exactly one JSON line: ${dry ? '{"ok":true,"dryRun":true,"html":"<
 const outFile = path.join(os.tmpdir(), `post-li-${process.pid}.txt`);
 const common = ['-m', POST_MODEL, '-c', 'model_reasoning_effort="medium"', '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', '-o', outFile];
 const args = st.session ? ['exec', 'resume', st.session, ...common, prompt] : ['exec', ...common, '-C', FEED, prompt];
+// Close tabs this run opened on LinkedIn (or left blank); never touch tabs that existed before.
+const osa = src => { try { return execFileSync('/usr/bin/osascript', ['-e', src], {encoding: 'utf8', timeout: 30000}).trim(); } catch { return ''; } };
+const listTabs = () => osa('set out to ""\ntell application "Google Chrome"\nrepeat with w in windows\nrepeat with t in tabs of w\nset out to out & (id of t) & "|" & (URL of t) & linefeed\nend repeat\nend repeat\nend tell\nreturn out').split('\n').map(l => l.split('|'));
+const before = new Set(listTabs().map(([id]) => id));
+process.on('exit', () => { for (const [id, url = ''] of listTabs()) if (id && (url.includes('feedli=1') || (!before.has(id) && /^(https:\/\/([a-z]+\.)?linkedin\.com\/|chrome:\/\/newtab|about:blank)/.test(url)))) osa(`tell application "Google Chrome"\nrepeat with w in windows\nrepeat with t in tabs of w\nif (id of t as text) is "${id}" then close t\nend repeat\nend repeat\nend tell`); });
 let res;
 try {
   const {code, out} = await run(process.env.HOME + '/.local/bin/codex', args, {timeoutMs: 25 * 60000, input: '', cwd: FEED});

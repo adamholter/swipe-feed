@@ -2,11 +2,17 @@
 
 A phone app for reviewing drafted posts. An AI agent makes drafts, you swipe, and your T3 Code thread handles anything you send back.
 
-- **Swipe right:** post now or schedule, with your caption edits.
+- **Swipe right:** post now or schedule, with your caption edits. Add an X post link to make it a quote post.
 - **Swipe left:** skip. Skipped drafts can be restored.
 - **Swipe up:** later.
-- **Pencil:** send a change request to your T3 Code thread.
+- **Pencil:** send a change request to your T3 Code thread, with reference images if you like.
 - **Plus:** ask your thread for a new batch.
+- **Make a thread:** tick several drafts, then edit, reorder and post them as one X thread.
+- **Undo:** works until the Post button is clicked on X, even while the agent is posting.
+
+On a desktop browser there is also a grid view of every draft, and the arrow keys work: left skips, right posts, up is later, down is edit.
+
+Posts you choose are spaced out by default: each waits until 30 minutes after your last one. The switch and the gap are at the top of the Activity sheet.
 
 New drafts appear in the open app within about 3 seconds, with no reload. The app posts nothing itself: an always-on agent on your Mac does that, and only after you swipe.
 
@@ -49,11 +55,47 @@ node agent/feed.mjs publish 001
   "source": "Optional source, under More",
   "kind": "video",
   "aspect": 1,
-  "media": "output/video.mp4"
+  "media": "output/video.mp4",
+  "quote": {"url": "https://x.com/someone/status/123", "handle": "someone", "name": "Some One", "text": "The quoted post's text"}
 }
 ```
 
-`kind` is `video` or `still`. `aspect` is width divided by height.
+`kind` is `video` or `still`. `aspect` is width divided by height. `quote` is optional: it makes the draft a quote post of that X post, and the app shows the quoted text in the post sheet. Copy `text` word for word. `"quote": null` removes it.
+
+## Drafting a thread
+
+A thread is its own card, built from drafts that are already in the app. The drafts stay their own cards too.
+
+```
+node agent/feed.mjs thread put launch-thread thread.json
+node agent/feed.mjs thread get launch-thread     # prints it back, with any edits made in the app
+```
+
+`thread.json`:
+
+```json
+{
+  "title": "Short label for you",
+  "parts": [
+    {"num": 1, "text": "First post, with draft 001's media"},
+    {"text": "A text-only post"},
+    {"num": 2, "text": "Last post, with draft 002's media"}
+  ]
+}
+```
+
+`put` with the same id replaces a thread that is still a draft. A part naming a draft that isn't in the app yet is left out and reported. Threads don't carry quotes.
+
+## Tests
+
+```
+cd site && npm run build && cd ..
+node test/worker.test.mjs    # the Worker on an in-memory database, in both AUTH_MODEs
+node test/agent.test.mjs     # post hold timing and stopping a run
+node test/ui.test.mjs        # headless browser checks; needs Playwright (npm i -D playwright, or set PLAYWRIGHT=/path/to/playwright/index.mjs)
+```
+
+The tests use made-up data, open no window and post nothing.
 
 ## Docs
 

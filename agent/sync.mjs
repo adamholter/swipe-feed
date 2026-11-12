@@ -1,5 +1,6 @@
 // Push every finished piece in PIECES_DIR and its media to the feed. Safe to run any time: unchanged media is skipped.
 // A piece is a folder with meta.json: {title, caption, alts, numbers, source, kind: "video"|"still", aspect, media: "output/video.mp4"}.
+// Optional "quote": {url, handle, name, text} makes the piece post as a quote of that X post; "quote": null clears it.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -27,7 +28,8 @@ export async function sync({quiet} = {}) {
     const kind = m.kind === 'video' ? 'video' : 'still', base = `${safe(id)}-${mediaVersion}`, mk = `m/${base}.${ext}`, tk = `t/${base}.${kind === 'video' ? 'jpg' : ext}`;
     if (!have.has(mk)) { await api('/api/agent/media/' + mk, {method: 'PUT', raw: fs.readFileSync(media), headers: {'content-type': TYPES[ext] || 'application/octet-stream'}, timeout: 180000}); uploaded++; }
     if (!have.has(tk)) { await api('/api/agent/media/' + tk, {method: 'PUT', raw: thumbOf(media, kind), headers: {'content-type': kind === 'video' ? 'image/jpeg' : TYPES[ext] || 'image/jpeg'}}); uploaded++; }
-    out.push({id, num: m.num ?? null, batch: m.batch ?? null, title: m.title || '', caption: m.caption, alts: m.alts || [], numbers: m.numbers || '', source: m.source || '', kind, aspect: m.aspect || null, media: mk, thumb: tk, version, created: m.created || new Date(st.mtimeMs).toISOString(), handled: null, tweetUrl: null});
+    const quote = m.quote === undefined ? undefined : m.quote && m.quote.url ? {url: m.quote.url, handle: m.quote.handle || '', name: m.quote.name || '', text: String(m.quote.text || '').slice(0, 1200)} : null;
+    out.push({id, num: m.num ?? null, batch: m.batch ?? null, title: m.title || '', caption: m.caption, alts: m.alts || [], numbers: m.numbers || '', source: m.source || '', kind, aspect: m.aspect || null, media: mk, thumb: tk, version, created: m.created || new Date(st.mtimeMs).toISOString(), handled: null, tweetUrl: null, ...(quote !== undefined ? {quote} : {})});
   }
   let added = 0, updated = 0;
   for (let k = 0; k < out.length; k += 60) { const r = await api('/api/agent/items', {method: 'POST', body: {items: out.slice(k, k + 60)}}); added += r.added; updated += r.updated; }

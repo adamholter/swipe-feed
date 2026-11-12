@@ -6,6 +6,7 @@ compatibility_date = "2026-10-01"
 [vars]
 AUTH_MODE = "cloudflare-access"
 OWNER_EMAIL = "you@example.com"
+# CAPTION_MAX = "280"  # longest caption; the default 25000 is X Premium's limit
 # wrangler secret put AGENT_TOKEN
 
 [[d1_databases]]

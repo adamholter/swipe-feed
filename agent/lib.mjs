@@ -30,9 +30,10 @@ export async function api(p, {method = 'GET', body, raw, headers = {}, timeout =
   }
 }
 // run a command with a hard timeout, resolving {code, out}
-export function run(cmd, args, {timeoutMs = 15 * 60000, cwd, input} = {}) {
+export function run(cmd, args, {timeoutMs = 15 * 60000, cwd, input, onSpawn} = {}) {
   return new Promise(res => {
     const ch = spawn(cmd, args, {cwd, stdio: [input ? 'pipe' : 'ignore', 'pipe', 'pipe'], env: {...process.env, PATH: `/opt/homebrew/bin:${process.env.HOME}/.local/bin:/usr/local/bin:${process.env.PATH}`}});
+    onSpawn?.(ch);
     let out = ''; ch.stdout.on('data', d => out += d); ch.stderr.on('data', d => out += d);
     if (input) { ch.stdin.write(input); ch.stdin.end(); }
     const t = setTimeout(() => { ch.kill('SIGTERM'); out += '\n[timeout]'; }, timeoutMs);

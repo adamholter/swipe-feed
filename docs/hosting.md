@@ -7,7 +7,9 @@ npm run build      # inlines app.html into dist/server/index.js
 npm run validate
 ```
 
-Migrations are in `site/drizzle/`.
+Migrations are in `site/drizzle/`. Apply new ones when you update: `0003_threads.sql` adds threads. Until it's applied, the feed and posting keep working and only thread actions report that it's missing.
+
+Optional setting: `CAPTION_MAX`, the longest caption the app accepts. The default is 25,000, X Premium's limit. Set it to 280 for an account without Premium. The post sheet shows a count past 280 either way.
 
 ## Auth
 

@@ -54,6 +54,7 @@ footer{display:flex;justify-content:center;gap:20px;padding:12px 0 10px}
 .empty b{color:var(--fg);font-size:18px;font-weight:600}
 .pill{border:1px solid #2a2a2a;border-radius:22px;padding:10px 18px;color:var(--fg)}
 .hint{position:absolute;z-index:5;left:0;right:0;bottom:14px;text-align:center;font-size:13px;color:var(--mu);pointer-events:none}
+@media (max-width:899px){.khint{display:none}}
 /* sheets */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s;z-index:10}
 .scrim.on{opacity:1;pointer-events:auto}
@@ -107,25 +108,106 @@ input[type=datetime-local]{width:100%;margin-top:10px;background:#0d0d0d;border:
 .toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 .toast button{color:#93c5fd;font-weight:600;padding:2px 10px}
 .toast:not(.u) button{display:none}
+/* threads */
+.card.th .media{max-height:52%}
+.thstrip{display:flex;gap:6px;overflow:hidden;margin:0 0 12px}
+.thstrip img,.thstrip .tx{width:48px;height:48px;border-radius:8px;object-fit:cover;background:#000;flex:0 0 auto}
+.thstrip .tx{background:#1b1b1b;display:grid;place-items:center;color:var(--mu);font-size:13px}
+.thopen{display:block;width:100%;margin-top:12px;padding:12px;border:1px solid #2a2a2a;border-radius:14px;font-weight:600;font-size:15px}
+.tbtn{color:inherit;text-decoration:underline}
+#shThread{top:0;max-height:none;height:100dvh;border-radius:0;padding:calc(6px + env(safe-area-inset-top)) 0 0;max-width:640px}
+#shThread h2{margin:0;padding:6px 16px 10px;border-bottom:1px solid #1f1f1f;gap:10px}
+#shThread h2 input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--fg);font:inherit;font-weight:600}
+#tSaved{font-size:12px;color:var(--mu);font-weight:400;white-space:nowrap}
+#tParts{flex:1;min-height:0;overflow:auto;padding:12px 16px 20px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.tp{display:grid;grid-template-columns:30px minmax(0,1fr);column-gap:10px;position:relative;padding-bottom:18px}
+.tp:not(:last-of-type)::before{content:'';position:absolute;left:14px;top:32px;bottom:0;width:2px;background:#262626}
+.tn{width:30px;height:30px;border-radius:15px;background:#222;color:var(--fg);display:grid;place-items:center;font-size:13px;font-weight:600}
+.tb{min-width:0}
+.tb textarea{min-height:0;font-size:16px;line-height:1.35;padding:10px 11px;overflow:hidden;display:block}
+.tr{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
+.tr textarea{flex:1 1 150px;min-width:0;width:auto}
+.tm{position:relative;flex:0 0 84px;border-radius:10px;overflow:hidden;background:#000;cursor:pointer}
+.tm video,.tm img{display:block;width:100%;height:100%;object-fit:contain}
+.tm .play{position:absolute;left:50%;top:50%;width:30px;height:30px;margin:-15px;border-radius:15px;background:rgba(0,0,0,.6);display:grid;place-items:center;pointer-events:none}
+.tm .play svg{width:13px;height:13px;fill:#fff}
+.tm.on{flex:1 0 100%}
+.tm.on .play{display:none}
+.tf{display:flex;align-items:center;gap:4px;margin-top:6px;font-size:12px;color:var(--mu);min-height:32px}
+.tf .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tf button{width:32px;height:32px;border-radius:16px;font-size:16px;color:#cfcfcf;flex:0 0 auto}
+.tf button:active{background:#222}
+.tf button:disabled{opacity:.25}
+.tf .over{color:var(--no)}
+.tchips{display:flex;gap:6px;overflow-x:auto;margin-top:6px;scrollbar-width:none}
+.tchips::-webkit-scrollbar{display:none}
+.tchips .chip{font-size:13px;padding:6px 10px;border-radius:12px;max-width:85%}
+.tadd{display:flex;gap:8px;margin:0 0 6px 40px}
+.tadd button{flex:1;padding:10px 6px;border:1px dashed #333;border-radius:12px;font-size:14px;color:#cfcfcf}
+.tlinks{display:flex;gap:18px;justify-content:center;margin:14px 0 4px;font-size:14px;color:var(--mu)}
+.tlinks button{text-decoration:underline;padding:6px}
+#tFoot{padding:10px 16px calc(10px + env(safe-area-inset-bottom));border-top:1px solid #1f1f1f;background:#141414}
+#tFoot .seg{margin-top:0}
+#tFoot .primary{margin-top:10px}
+#shPick{z-index:13}
+.holdrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;font-size:15px}
+.holdsw{min-width:60px;padding:8px 12px;border-radius:999px;border:1px solid #555;background:transparent;color:#aaa;font:inherit}
+.holdsw.on{background:#fff;color:#000;border-color:#fff}
+.holdctl{display:flex;align-items:center;gap:8px}
+.holdctl .hb{width:34px;height:34px;border-radius:17px;border:1px solid #2a2a2a;font-size:18px;color:var(--fg);background:transparent}
+.holdctl .hb:disabled{opacity:.3}
+.holdctl b{min-width:58px;text-align:center;font-weight:600}
+.holdctl.off b{color:var(--mu)}
+/* grid view: desktop only (900 px and up), chosen with the header button and remembered */
+#bView,#bBack,#grid{display:none}
+.ib.on{background:#262626}
+/* wide screens: the caption and its notes sit in a centred column under the picture, not one long line from the left edge */
+@media(min-width:900px){.card .txt>*{max-width:720px;margin-left:auto;margin-right:auto}}
+@media(min-width:900px){#bView{display:grid}#bBack.on{display:block;padding:7px 14px;font-size:14px}}
+body.grid main{overflow:auto;margin:0;padding:4px 16px 28px}
+body.grid #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;align-items:start}
+body.grid footer,body.grid .hint{display:none}
+.tile{background:var(--card);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;transition:opacity .18s,transform .18s}
+.tile.gone{opacity:0;transform:scale(.96)}
+.tmed{display:block;width:100%;aspect-ratio:1;background:#000;position:relative;cursor:zoom-in}
+.tmed video,.tmed img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+.tmed .tx{position:absolute;inset:0;display:grid;place-items:center;color:var(--mu);font-size:28px}
+.tmed .vid{position:absolute;left:8px;bottom:8px;font-style:normal;font-size:11px;line-height:1;background:rgba(0,0,0,.6);border-radius:10px;padding:4px 8px;color:#fff;transition:opacity .15s}
+.tile:hover .vid{opacity:0}
+.tbody{padding:10px 12px 2px}
+.tcap{font-size:14.5px;line-height:1.35;margin:0 0 6px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-line}
+.tbody .meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tacts{display:flex;justify-content:flex-end;gap:8px;padding:6px 10px 10px;margin-top:auto}
+.tacts .act,.tacts .act.ed,.tacts .act.lt{width:38px;height:38px;border-radius:19px}
+.tacts .act svg,.tacts .act.ed svg,.tacts .act.lt svg{width:17px;height:17px}
+.tacts .act:hover{background:#1c1c1c}
+.mkrow{cursor:pointer}.mkrow input{width:22px;height:22px;flex:0 0 auto;accent-color:var(--fg)}
+#shMake .foot{padding:12px 0 4px}#shMake .foot .primary{width:100%}
+.tacts .mk{margin-right:auto;align-self:center;font-size:12.5px;color:var(--mu);padding:0 2px}
+.qbox{display:grid;gap:6px;margin:10px 0 2px}.qbox label{font-size:12px;color:var(--mu)}.qbox input{font:inherit;font-size:15px;padding:10px 12px;border-radius:10px;border:1px solid var(--ln);background:transparent;color:inherit;width:100%;box-sizing:border-box}.qbox input.bad{border-color:#e5484d}
+.qprev{border:1px solid var(--ln);border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.35}.qprev span{color:var(--mu)}.qprev p{margin:4px 0 0;white-space:pre-wrap;max-height:7.2em;overflow:auto}
 </style>
 </head>
 <body>
 <header>
   <h1>Feed<span id="n"></span></h1>
+  <button class="pill" id="bBack">Back to grid</button>
+  <button class="ib" id="bView" aria-label="Grid view" aria-pressed="false" title="Grid view"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.2"/></svg></button>
   <button class="ib" id="bSkipped" aria-label="Skipped"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
   <button class="ib" id="bBatch" aria-label="Request a batch"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
   <button class="ib" id="bAct" aria-label="Activity"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg><i class="dot" id="actDot" hidden></i></button>
 </header>
 <div id="warn"></div>
 <main id="stack">
+  <div id="grid"></div>
   <div class="empty" id="empty"><b>All caught up</b><span>Nothing new to review.</span><button class="pill" id="bBatch2">Request a batch</button><button class="pill" id="bSkipped2">View skipped</button></div>
-  <div class="hint" id="hint" hidden>Swipe right to post · left to skip · up for later</div>
+  <div class="hint" id="hint" hidden>Swipe right to post · left to skip · up for later<span class="khint"> · or use the arrow keys (↓ edit)</span></div>
 </main>
 <footer id="acts">
-  <button class="act no" id="fNo" aria-label="Skip"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-  <button class="act lt" id="fLater" aria-label="Later"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></button>
-  <button class="act ed" id="fEd" aria-label="Needs edits"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg></button>
-  <button class="act go" id="fGo" aria-label="Post"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+  <button class="act no" id="fNo" aria-label="Skip" title="Skip (←)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <button class="act lt" id="fLater" aria-label="Later" title="Send to back (↑)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></button>
+  <button class="act ed" id="fEd" aria-label="Needs edits" title="Needs edits (↓)"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg></button>
+  <button class="act go" id="fGo" aria-label="Post" title="Post (→)"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
 </footer>
 
 <div class="scrim" id="scrim"></div>
@@ -135,6 +217,8 @@ input[type=datetime-local]{width:100%;margin-top:10px;background:#0d0d0d;border:
   <textarea id="pCap" autocomplete="off" autocapitalize="sentences" spellcheck="true" enterkeyhint="enter" rows="3" placeholder="Caption"></textarea>
   <div class="count" id="pCount"></div>
   <div class="chips" id="pChips"></div>
+  <div class="qbox" id="pQBox"><label for="pQuote">Quote post</label><input type="url" id="pQuote" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste an X post link to quote it">
+    <div class="qprev" id="pQPrev" hidden></div></div>
   <div class="seg" id="pWhen"><button data-w="now" class="on">Now</button><button data-w="later">Schedule</button></div>
   <input type="datetime-local" id="pAt" hidden>
   <button class="primary" id="pGo">Post now</button>
@@ -149,7 +233,7 @@ input[type=datetime-local]{width:100%;margin-top:10px;background:#0d0d0d;border:
 <section class="sheet" id="shBatch">
   <div class="grab"></div>
   <h2>New batch<button class="x" data-close>Cancel</button></h2>
-  <textarea id="bTxt" autocomplete="off" autocapitalize="sentences" spellcheck="true" enterkeyhint="enter" rows="4" placeholder="What should the ideas be about? Leave blank to let Claude pick."></textarea>
+  <textarea id="bTxt" autocomplete="off" autocapitalize="sentences" spellcheck="true" enterkeyhint="enter" rows="4" placeholder="What should the ideas be about? Leave blank to let your agent pick."></textarea>
   <div class="refs" id="bRefs"></div>
   <div class="stepper"><span>Renders</span><button id="bMinus" aria-label="Fewer">−</button><b id="bN">10</b><button id="bPlus" aria-label="More">+</button></div>
   <button class="primary" id="bGo">Send to your agent</button>
@@ -157,12 +241,34 @@ input[type=datetime-local]{width:100%;margin-top:10px;background:#0d0d0d;border:
 <section class="sheet" id="shAct">
   <div class="grab"></div>
   <h2>Activity<button class="x" data-close>Done</button></h2>
+  <div class="holdrow"><span>Wait between posts</span><div class="holdctl" id="holdCtl"><button class="hb" id="holdMinus" aria-label="Shorter wait">−</button><b id="holdMin">30 min</b><button class="hb" id="holdPlus" aria-label="Longer wait">+</button><button id="holdSw" class="holdsw on" aria-pressed="true">On</button></div></div>
   <div class="list" id="actList"></div>
 </section>
 <section class="sheet" id="shSkip">
   <div class="grab"></div>
   <h2>Skipped<button class="x" data-close>Done</button></h2>
   <div class="list" id="skipList"></div>
+</section>
+<section class="sheet" id="shThread">
+  <h2><input id="tTitle" aria-label="Thread name" autocomplete="off"><span id="tSaved"></span><button class="x" id="tClose">Done</button></h2>
+  <div id="tParts"></div>
+  <div id="tFoot">
+    <div class="seg" id="tWhen"><button data-w="now" class="on">Now</button><button data-w="later">Schedule</button></div>
+    <input type="datetime-local" id="tAt" hidden>
+    <button class="primary" id="tGo">Post thread</button>
+  </div>
+</section>
+<section class="sheet" id="shPick">
+  <div class="grab"></div>
+  <h2>Add a piece<button class="x" id="pickClose">Cancel</button></h2>
+  <div class="list" id="pickList"></div>
+</section>
+<section class="sheet" id="shMake">
+  <div class="grab"></div>
+  <h2>Make a thread<button class="x" id="makeClose">Cancel</button></h2>
+  <p style="font-size:13.5px;line-height:1.4;color:var(--mu);margin:0 0 4px">Pick the pieces. They stay in your feed as their own cards, and the thread gets its own captions.</p>
+  <div class="list" id="makeList"></div>
+  <div class="foot"><button class="primary" id="makeGo">Make thread</button></div>
 </section>
 <div class="toast" id="toast"><span id="toastT"></span><button id="toastU">Undo</button></div>
 
@@ -171,17 +277,22 @@ const $ = s => document.querySelector(s);
 let ITEMS = [], idx = 0, current = null, sheetOpen = null, toastTimer = 0, undoFn = null, when = 'now', batchN = 10;
 let feedSig = null, reqSig = null, wantMerge = false, merging = false, busy = false; const handled = new Map();
 
+// Phone networks drop requests ("Failed to fetch") after sleep or a wifi/cell switch: retry those with backoff and a fresh connection.
 async function api(p, b) {
-  const r = await fetch(p, b ? {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify(b)} : {});
+  let r;
+  for (let i = 0; ; i++) {
+    try { r = await fetch(p, b ? {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify(b), cache: 'no-store'} : {cache: 'no-store'}); break; }
+    catch (e) { if (i >= 3) throw new Error('No connection to the feed server, tap again'); await new Promise(res => setTimeout(res, [600, 1500, 3000][i])); }
+  }
   if (r.status === 401) { location.href = '/signin-with-chatgpt?return_to=/'; throw new Error('sign in'); }
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.error || 'Request failed');
   return j;
 }
-function toast(t, undo) {
+function toast(t, undo, ms) {
   $('#toastT').textContent = t; undoFn = undo || null;
   $('#toast').classList.toggle('u', !!undo); $('#toast').classList.add('on');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('#toast').classList.remove('on'); undoFn = null; }, undo ? 5000 : 2600);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('#toast').classList.remove('on'); undoFn = null; }, ms || (undo ? 5000 : 2600));
 }
 $('#toastU').onclick = () => { const f = undoFn; $('#toast').classList.remove('on'); undoFn = null; f && f(); };
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
@@ -197,7 +308,19 @@ async function load() {
     render();
   } catch (e) { if (e.message !== 'sign in') toast(e.message); }
 }
+let POST_HOLD = true, HOLD_MIN = 30, holdMinDirty = false, CAP_MAX = 25000;
+const HOLD_STEPS = [5, 10, 15, 20, 30, 45, 60, 90, 120];
+const fmtMin = m => m >= 60 && m % 60 === 0 ? (m / 60) + ' h' : m >= 60 ? Math.floor(m / 60) + ' h ' + (m % 60) + ' min' : m + ' min';
+function showHold() {
+  const b = $('#holdSw'); if (b) { b.textContent = POST_HOLD ? 'On' : 'Off'; b.classList.toggle('on', POST_HOLD); b.setAttribute('aria-pressed', POST_HOLD); }
+  if ($('#holdMin')) { $('#holdMin').textContent = fmtMin(HOLD_MIN); $('#holdCtl').classList.toggle('off', !POST_HOLD);
+    $('#holdMinus').disabled = HOLD_MIN <= HOLD_STEPS[0]; $('#holdPlus').disabled = HOLD_MIN >= HOLD_STEPS[HOLD_STEPS.length - 1]; }
+}
 function showStatus(d) {
+  if (typeof d.postHold === 'boolean') POST_HOLD = d.postHold;
+  if (d.captionMax > 0) CAP_MAX = d.captionMax;
+  if (typeof d.postHoldMin === 'number' && !holdMinDirty) HOLD_MIN = d.postHoldMin;
+  showHold();
   const stale = !d.agent || Date.now() - new Date(d.agent.at) > 10 * 60000;
   $('#warn').style.display = stale ? 'block' : 'none';
   $('#warn').textContent = d.agent ? `Your agent last checked in ${ago(d.agent.at)}. Requests will wait until it's back.` : 'Your agent has not checked in yet.';
@@ -213,6 +336,7 @@ async function mergeFeed() {
     if (midAction()) { wantMerge = true; return; }
     const t = Date.now(); handled.forEach((at, id) => { if (t - at > 20000) handled.delete(id); });
     const was = ITEMS[idx], wasNext = ITEMS[idx + 1], list = d.items.filter(x => !handled.has(x.id));
+    if (gridOn()) { ITEMS = list; idx = 0; showStatus(d); return render(); } // grid: server order, tiles that didn't change stay as they are
     const cur = was && list.find(x => x.id === was.id);
     ITEMS = cur ? [cur, ...list.filter(x => x !== cur)] : list; idx = 0;
     showStatus(d);
@@ -236,7 +360,20 @@ async function pulse() {
     if (wantMerge) mergeFeed();
   } catch {}
 }
+function threadCardEl(it) {
+  const c = document.createElement('div'); c.className = 'card th';
+  const first = it.parts.find(p => p.media), n = it.parts.length, ratio = first && first.aspect ? 1 / first.aspect : 1;
+  const media = !first ? '' : first.kind === 'video' ? `<video src="${first.media}" poster="${first.thumb || ''}" muted loop playsinline preload="metadata"></video>` : `<img src="${first.media}" alt="">`;
+  c.innerHTML = `<div class="media" style="aspect-ratio:${ratio}">${media}<div class="stamp r">OPEN</div><div class="stamp l">SKIP</div><div class="stamp u">LATER</div></div>
+    <div class="txt"><div class="thstrip">${it.parts.slice(0, 12).map(p => p.thumb ? `<img src="${p.thumb}" alt="">` : '<div class="tx">Aa</div>').join('')}</div>
+    <p class="cap">${esc(it.parts[0]?.text || it.title)}</p>
+    <div class="meta">${it.deferred ? '<span class="tag">Later</span>' : ''}<span class="tag">Thread · ${n} posts</span>${esc(it.title)}</div>
+    <button class="thopen">Open thread</button></div>`;
+  c.querySelector('.thopen').onclick = e => { e.stopPropagation(); openThread(it); };
+  return c;
+}
 function cardEl(it) {
+  if (it.thread) return threadCardEl(it);
   const c = document.createElement('div'); c.className = 'card';
   const ratio = it.aspect ? 1 / it.aspect : 1;
   const media = it.kind === 'video'
@@ -245,14 +382,118 @@ function cardEl(it) {
   const extra = [it.numbers && `<p>${esc(it.numbers)}</p>`, it.source && `<p>Source: ${esc(it.source)}</p>`, ...(it.alts || []).map(a => `<p>“${esc(a)}”</p>`)].filter(Boolean).join('');
   c.innerHTML = `<div class="media" style="aspect-ratio:${ratio}">${media}<div class="stamp r">POST</div><div class="stamp l">SKIP</div><div class="stamp u">LATER</div></div>
     <div class="txt"><p class="cap">${esc(it.caption || it.title)}</p>
-    <div class="meta">${it.edited ? '<span class="tag">Updated</span>' : ''}${it.deferred ? '<span class="tag">Later</span>' : ''}#${esc(it.num ?? '')} · ${esc(it.title || '')}${extra ? ' · <button class="mb" style="color:inherit;text-decoration:underline">details</button>' : ''}</div>
+    <div class="meta">${it.edited ? '<span class="tag">Updated</span>' : ''}${it.deferred ? '<span class="tag">Later</span>' : ''}${thTag(it)}${qTag(it)}#${esc(it.num ?? '')} · ${esc(it.title || '')}${extra ? ' · <button class="mb" style="color:inherit;text-decoration:underline">details</button>' : ''} · <button class="tbtn mk">Make a thread</button></div>
     <div class="more">${extra}</div></div>`;
+  const mk = c.querySelector('.mk'); if (mk) mk.onclick = e => { e.stopPropagation(); makeThread(it); };
   const mb = c.querySelector('.mb'); if (mb) mb.onclick = e => { e.stopPropagation(); c.querySelector('.more').classList.toggle('on'); };
   const v = c.querySelector('video'), s = c.querySelector('.snd');
   if (s) s.onclick = e => { e.stopPropagation(); v.muted = !v.muted; s.style.opacity = v.muted ? 1 : .5; };
   return c;
 }
+const batchCount = it => it.batch ? ITEMS.filter(x => !x.thread && x.batch === it.batch).length : 0;
+// A piece stays its own card when a thread uses it; the tag says so.
+const qTag = it => it.quote ? `<span class="tag">Quotes @${esc(it.quote.handle || 'post')}</span>` : '';
+const thTag = it => !it.inThread || it.thread ? '' : `<span class="tag">${['draft'].includes(it.inThread) ? 'In a thread' : ['posted', 'done'].includes(it.inThread) ? 'Thread posted' : ['queued', 'posting', 'scheduled', 'claimed'].includes(it.inThread) ? 'Thread posting' : 'In a thread'}</span>`;
+// ---------- grid view (desktop) ----------
+// Every card as a tile, with the same four actions on each. The actions reuse the one-card code: a tile's item is moved to
+// the front of the queue (pick) and put back if the sheet is cancelled (unpick). Clicking a tile's media opens that card big.
+const wide = matchMedia('(min-width: 900px)');
+let gridPref = localStorage.getItem('feed.view') === 'grid', focusId = null, focusBack = null, selBack = null;
+const gridOn = () => wide.matches && gridPref && !focusId;
+function pick(it) {
+  const k = ITEMS.indexOf(it); if (k < idx) return false;
+  selBack = k === idx ? null : {it, k};
+  if (k !== idx) { ITEMS.splice(k, 1); ITEMS.splice(idx, 0, it); }
+  return true;
+}
+function unpick() {
+  const s = selBack; selBack = null;
+  if (s && ITEMS[idx] === s.it) { ITEMS.splice(idx, 1); ITEMS.splice(Math.min(s.k, ITEMS.length), 0, s.it); }
+}
+function openBig(it) {
+  const k = ITEMS.indexOf(it); if (k < idx) return;
+  ITEMS.splice(k, 1); ITEMS.splice(idx, 0, it); selBack = null; focusBack = {it, k}; focusId = it.id; render();
+}
+function exitBig() {
+  if (!focusId) return;
+  const f = focusBack; focusId = null; focusBack = null;
+  if (f && ITEMS[idx] === f.it) { ITEMS.splice(idx, 1); ITEMS.splice(Math.min(f.k, ITEMS.length), 0, f.it); }
+  render();
+}
+const tileKey = it => [it.id, it.version ?? '', it.quote?.url || '', it.deferred ? 'L' : '', it.edited ? 'U' : '', it.inThread || '', it.thread ? 'T' + it.parts.length + ':' + (it.parts[0]?.text || '').length : (it.caption || '').length, it.thread ? 0 : batchCount(it)].join('|');
+function tileEl(it, key) {
+  const t = document.createElement('div'); t.className = 'tile'; t.dataset.k = key;
+  const m = it.thread ? it.parts.find(p => p.media) : it;
+  const media = !m ? '<div class="tx">Aa</div>' : m.kind === 'video'
+    ? `<video src="${m.media}" ${m.thumb ? `poster="${m.thumb}" preload="none"` : 'preload="metadata"'} muted loop playsinline></video><i class="vid">Video</i>`
+    : `<img src="${m.media}" alt="" loading="lazy">`;
+  const bc = it.thread ? 0 : batchCount(it), cap = it.thread ? (it.parts[0]?.text || it.title) : (it.caption || it.title);
+  const tags = (it.edited ? '<span class="tag">Updated</span>' : '') + (it.deferred ? '<span class="tag">Later</span>' : '') + (it.thread ? `<span class="tag">Thread · ${it.parts.length} posts</span>` : thTag(it) + qTag(it));
+  t.innerHTML = `<button class="tmed" aria-label="Open this card">${media}</button>
+    <div class="tbody"><p class="tcap" title="${esc(cap)}">${esc(cap)}</p><div class="meta">${tags}${it.thread ? esc(it.title) : `#${esc(it.num ?? '')} · ${esc(it.title || '')}`}</div></div>
+    <div class="tacts">${!it.thread ? `<button class="tbtn mk">Make a thread</button>` : ''}
+      <button class="act no" data-a="skip" aria-label="Skip" title="Skip (←)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <button class="act lt" data-a="later" aria-label="Later" title="Send to back (↑)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></button>
+      <button class="act ed" data-a="edit" aria-label="Needs edits" title="Needs edits (↓)"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg></button>
+      <button class="act go" data-a="post" aria-label="${it.thread ? 'Open thread' : 'Post'}" title="${it.thread ? 'Open thread' : 'Post'} (→)"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button></div>`;
+  const v = t.querySelector('video');
+  t.onmouseenter = () => { hoverTile = t; if (v) v.play().catch(() => {}); }; t.onmouseleave = () => { if (hoverTile === t) hoverTile = null; if (v) v.pause(); };
+  t.querySelector('.tmed').onclick = () => { if (!busy) openBig(t._it); };
+  const run = {skip, later, edit: openEdit, post: openPost};
+  t.querySelectorAll('[data-a]').forEach(b => b.onclick = () => { if (!busy && pick(t._it)) run[b.dataset.a](); });
+  const mk = t.querySelector('.mk'); if (mk) mk.onclick = () => makeThread(t._it);
+  return t;
+}
+function renderGrid() {
+  document.querySelectorAll('.card').forEach(c => c.remove()); current = null;
+  const list = ITEMS.slice(idx), box = $('#grid');
+  $('#n').textContent = list.length ? String(list.length) : '';
+  $('#empty').style.display = list.length ? 'none' : 'flex';
+  $('#hint').hidden = true;
+  // keep tiles that didn't change (a hovered video keeps playing through a live update); add, drop and reorder the rest
+  const have = new Map([...box.children].map(t => [t.dataset.k, t]));
+  let prev = null;
+  for (const it of list) {
+    const key = tileKey(it); let t = have.get(key);
+    if (t) have.delete(key); else t = tileEl(it, key);
+    t._it = it; t.classList.remove('gone');
+    const at = prev ? prev.nextSibling : box.firstChild; if (t !== at) box.insertBefore(t, at);
+    prev = t;
+  }
+  have.forEach(t => t.remove());
+}
+function showView() {
+  const g = gridOn();
+  document.body.classList.toggle('grid', g);
+  $('#bView').classList.toggle('on', wide.matches && gridPref); $('#bView').setAttribute('aria-pressed', wide.matches && gridPref);
+  $('#bBack').classList.toggle('on', !!focusId && wide.matches && gridPref);
+  if (!g) $('#grid').innerHTML = '';
+  return g;
+}
+$('#bView').onclick = () => {
+  if (midAction()) return;
+  if (focusId) return exitBig();
+  gridPref = !gridPref; localStorage.setItem('feed.view', gridPref ? 'grid' : 'card'); selBack = null; render();
+};
+$('#bBack').onclick = () => { if (!midAction()) exitBig(); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && focusId && !sheetOpen && !busy) exitBig(); });
+// Desktop arrow-key hotkeys: up = send to back, left = skip, right = post, down = needs edits.
+// Card view acts on the front card; grid view acts on the hovered tile, else the first tile. Ignored while a sheet is open or typing.
+let hoverTile = null;
+document.addEventListener('keydown', e => {
+  const run = {ArrowUp: later, ArrowLeft: skip, ArrowRight: openPost, ArrowDown: openEdit}[e.key];
+  if (!run || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey || e.repeat) return;
+  const a = document.activeElement;
+  if (a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return;
+  if (midAction() || !ITEMS[idx]) return;
+  e.preventDefault();
+  if (gridOn()) { const it = hoverTile && hoverTile.isConnected && hoverTile._it || ITEMS[idx]; if (!pick(it)) return; }
+  run();
+});
+wide.addEventListener('change', () => { if (!midAction()) { if (!wide.matches) { focusId = null; focusBack = null; } selBack = null; render(); } });
+
 function render() {
+  if (showView()) return renderGrid();
   document.querySelectorAll('.card').forEach(c => c.remove());
   const left = ITEMS.length - idx;
   $('#n').textContent = left ? String(left) : '';
@@ -268,13 +509,21 @@ function render() {
   attachDrag(current);
 }
 function advance(dir) {
+  if (gridOn()) { // grid: the tile fades out, then the grid closes up
+    const it = ITEMS[idx]; if (!it) return;
+    const t = [...$('#grid').children].find(x => x._it === it); if (t) t.classList.add('gone');
+    handled.set(it.id, Date.now()); selBack = null;
+    busy = true; idx++; setTimeout(() => { busy = false; render(); if (wantMerge) mergeFeed(); }, 190);
+    return;
+  }
   const c = current; if (!c) return;
   c.style.transform = dir === 'up' ? 'translateY(-115%)' : `translateX(${dir * 130}%) rotate(${dir * 18}deg)`; c.style.opacity = 0;
   localStorage.setItem('feed.hint', '1');
   const it = ITEMS[idx]; if (it) handled.set(it.id, Date.now());
-  busy = true; idx++; setTimeout(() => { busy = false; render(); if (wantMerge) mergeFeed(); }, 230);
+  // a card opened big from the grid goes back to the grid once it's dealt with
+  busy = true; idx++; setTimeout(() => { busy = false; focusId = null; focusBack = null; render(); if (wantMerge) mergeFeed(); }, 230);
 }
-function snapBack() { if (!current) return; current.style.transform = ''; current.querySelectorAll('.stamp').forEach(s => s.style.opacity = 0); }
+function snapBack() { unpick(); if (!current) return; current.style.transform = ''; current.querySelectorAll('.stamp').forEach(s => s.style.opacity = 0); }
 
 // ---------- swipe ----------
 function attachDrag(c) {
@@ -316,8 +565,29 @@ function attachDrag(c) {
 async function skip() {
   const it = ITEMS[idx]; if (!it) return;
   advance(-1);
+  if (it.thread) {
+    try { await api('/api/thread', {id: it.threadId, action: 'skip'}); toast(`Skipped ${it.parts.length} posts`, async () => { try { await api('/api/thread', {id: it.threadId, action: 'undoskip'}); handled.delete(it.id); ITEMS.splice(idx, 0, it); render(); } catch (e) { toast(e.message); } }); }
+    catch (e) { toast(e.message); }
+    return;
+  }
   try { await api('/api/decide', {id: it.id, action: 'pass'}); toast('Skipped', () => undoTo(it)); }
   catch (e) { toast(e.message); }
+}
+// Undo a post at any stage: stops it, even mid-post, and reopens the post sheet with the text as it was.
+async function undoPost(it, caption) {
+  try {
+    await api('/api/decide', {id: it.id, action: 'undo'}); handled.delete(it.id); it.deferred = null; it.caption = caption;
+    ITEMS.splice(idx, 0, it); render(); openPost(); toast('Stopped. Back to your draft'); refreshDot();
+  } catch (e) { toast(e.message); }
+}
+async function undoThreadPost(t) {
+  try {
+    const r = await api('/api/thread', {id: t.threadId, action: 'undopost'});
+    if (r.stopped) { toast(`Stopped: ${r.up} of ${r.of} posts are up. Retry in Activity finishes the rest.`, null, 6000); refreshDot(); return; }
+    handled.delete(t.id); t.parts.forEach(p => p.itemId && handled.delete(p.itemId));
+    await load(); const c = ITEMS.find(x => x.threadId === t.threadId); if (c) openThread(c);
+    toast('Stopped. Back to your draft'); refreshDot();
+  } catch (e) { toast(e.message); }
 }
 async function undoTo(it) {
   try { await api('/api/decide', {id: it.id, action: 'undo'}); handled.delete(it.id); it.deferred = null; ITEMS.splice(idx, 0, it); render(); }
@@ -331,15 +601,15 @@ async function later() {
   advance('up'); idx--; ITEMS.splice(idx, 1); ITEMS.push(it); // advance() stepped past it; instead move it to the end
   handled.delete(it.id);
   try {
-    const r = await api('/api/defer', {id: it.id});
-    it.deferred = r.deferred;
+    const r = it.thread ? await api('/api/thread', {id: it.threadId, action: 'defer'}) : await api('/api/defer', {id: it.id});
+    it.deferred = r.deferred; if (gridOn() && !busy) render(); // grid: show the Later tag on the moved tile
     toast('Moved to the back', () => undoLater(it, prev));
   } catch (e) { toast(e.message); }
 }
 async function undoLater(it, prev) {
   const k = ITEMS.indexOf(it, idx); if (k < 0) return;
   try {
-    await api('/api/defer', {id: it.id, undo: true, prev});
+    if (it.thread) await api('/api/thread', {id: it.threadId, action: 'defer', undo: true, prev}); else await api('/api/defer', {id: it.id, undo: true, prev});
     it.deferred = prev || null; ITEMS.splice(k, 1); ITEMS.splice(idx, 0, it); render();
   } catch (e) { toast(e.message); }
 }
@@ -393,20 +663,32 @@ function setWhen(w) {
 }
 function updPostBtn() {
   const n = $('#pCap').value.trim().length;
-  // X Premium allows up to 25,000 chars: show the count past 280, block only past X's own cap.
-  $('#pCount').textContent = n > 280 ? `${n} chars` : ''; $('#pCount').classList.toggle('over', n > 25000);
-  $('#pGo').disabled = !n || n > 25000 || (when === 'later' && !$('#pAt').value);
-  $('#pGo').textContent = when === 'later' && $('#pAt').value ? 'Schedule for ' + fmtTime(new Date($('#pAt').value).toISOString()) : 'Post now';
+  // Show the count past 280 and block only past CAP_MAX (the Worker's CAPTION_MAX, 25,000 by default, which is X Premium's limit).
+  $('#pCount').textContent = n > 280 ? `${n} chars` : ''; $('#pCount').classList.toggle('over', n > CAP_MAX);
+  const qv = $('#pQuote').value.trim(), qok = !qv || X_POST.test(qv);
+  $('#pGo').disabled = !n || n > CAP_MAX || !qok || (when === 'later' && !$('#pAt').value);
+  $('#pGo').textContent = when === 'later' && $('#pAt').value ? 'Schedule for ' + fmtTime(new Date($('#pAt').value).toISOString()) : (qv && qok ? 'Quote post now' : 'Post now');
 }
 document.querySelectorAll('#pWhen button').forEach(b => b.onclick = () => setWhen(b.dataset.w));
 $('#pCap').oninput = updPostBtn; $('#pAt').oninput = updPostBtn;
+// Quote posts: a piece can carry the X post it answers. The link is editable; the preview shows only for the link the agent supplied.
+const X_POST = /^https:\/\/(?:x|twitter)\.com\/\w+\/status\/\d+/;
+function drawQuote(it) {
+  const v = $('#pQuote').value.trim(), q = it && it.quote, p = $('#pQPrev');
+  $('#pQuote').classList.toggle('bad', !!v && !X_POST.test(v));
+  if (q && v && v.startsWith(q.url)) { p.hidden = false; p.innerHTML = `<b>${esc(q.name || '')}</b> <span>@${esc(q.handle || '')}</span><p>${esc(q.text || '')}</p>`; } else { p.hidden = true; p.innerHTML = ''; }
+  updPostBtn();
+}
+$('#pQuote').oninput = () => drawQuote(ITEMS[idx]);
 function openPost() {
   const it = ITEMS[idx]; if (!it) return;
+  if (it.thread) { snapBack(); return openThread(it); }
   if (current) current.style.transform = 'translateX(60px) rotate(3deg)';
   $('#pCap').value = it.caption || '';
   const opts = [...new Set((it.alts || []).filter(a => a && a !== it.caption))];
   $('#pChips').innerHTML = opts.length ? opts.map((o, i) => `<button class="chip" data-i="${i}">${esc(o)}</button>`).join('') : '';
   $('#pChips').querySelectorAll('.chip').forEach(b => b.onclick = () => { $('#pCap').value = opts[+b.dataset.i]; updPostBtn(); });
+  $('#pQuote').value = it.quote?.url || ''; drawQuote(it);
   setWhen('now'); openSheet('#shPost');
 }
 $('#pGo').onclick = async () => {
@@ -414,9 +696,9 @@ $('#pGo').onclick = async () => {
   const caption = $('#pCap').value.trim(), scheduleAt = when === 'later' ? new Date($('#pAt').value).toISOString() : null;
   $('#pGo').disabled = true;
   try {
-    await api('/api/decide', {id: it.id, action: 'post', caption, scheduleAt});
+    await api('/api/decide', {id: it.id, action: 'post', caption, scheduleAt, quoteUrl: $('#pQuote').value.trim() || null});
     closeSheet(true); advance(1);
-    toast(scheduleAt ? 'Scheduled ' + fmtTime(scheduleAt) : 'Posting…', () => undoTo(it));
+    toast(scheduleAt ? 'Scheduled ' + fmtTime(scheduleAt) : (POST_HOLD ? `Posting in 30 s, or ${fmtMin(HOLD_MIN)} after your last post` : 'Posting in 30 s'), () => undoPost(it, caption), scheduleAt ? 8000 : 90000);
     refreshDot();
   } catch (e) { toast(e.message); $('#pGo').disabled = false; }
 };
@@ -454,13 +736,17 @@ function drawRefs(pre) {
 const refKeys = pre => REFS[pre].filter(r => r.key).map(r => r.key);
 function resetRefs(pre) { REFS[pre] = []; drawRefs(pre); }
 
+let editThread = null;
 function openEdit() {
-  if (!ITEMS[idx]) return; $('#eTxt').value = ''; resetRefs('e'); openSheet('#shEdit'); setTimeout(() => $('#eTxt').focus({preventScroll: true}), 320);
+  if (!ITEMS[idx]) return; editThread = null; $('#eTxt').placeholder = ITEMS[idx].thread ? 'What should change across the thread?' : 'e.g. drop Grok, make the title shorter, use a dark background'; $('#eTxt').value = ''; resetRefs('e'); openSheet('#shEdit'); setTimeout(() => $('#eTxt').focus({preventScroll: true}), 320);
 }
 $('#eGo').onclick = async () => {
   const it = ITEMS[idx], note = $('#eTxt').value.trim(), images = refKeys('e'); if (!it || (!note && !images.length)) return;
   $('#eGo').disabled = true;
-  try { await api('/api/decide', {id: it.id, action: 'edit', note, images}); closeSheet(true); advance(1); toast('Sent to your agent', () => undoTo(it)); refreshDot(); resetRefs('e'); }
+  try {
+    if (editThread || it.thread) { const t = editThread || it; await api('/api/thread', {id: t.threadId, action: 'edit', note, images}); editThread = null; closeSheet(true); snapBack(); toast('Sent to your agent. The thread stays here.'); refreshDot(); resetRefs('e'); }
+    else { await api('/api/decide', {id: it.id, action: 'edit', note, images}); closeSheet(true); advance(1); toast('Sent to your agent', () => undoTo(it)); refreshDot(); resetRefs('e'); }
+  }
   catch (e) { toast(e.message); }
   $('#eGo').disabled = false;
 };
@@ -477,18 +763,147 @@ $('#fNo').onclick = skip; $('#fEd').onclick = openEdit; $('#fGo').onclick = open
 $('#bSkipped').onclick = () => openSkipped(); $('#bSkipped2').onclick = () => openSkipped();
 $('#bBatch').onclick = openBatch; $('#bBatch2').onclick = openBatch;
 
+// ---------- threads ----------
+// One screen for the whole thread: every post's media and text, in order. Text saves as you type; order changes save at once.
+let TH = null, tDirty = false, tSaveT = 0, tWhenV = 'now', tSaving = null;
+const tAuto = ta => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 2 + 'px'; };
+function openThread(it) {
+  closeSheet(true);
+  TH = {threadId: it.threadId, id: it.id, title: it.title, parts: it.parts.map(p => ({...p})), card: it}; tDirty = false;
+  $('#tTitle').value = TH.title; $('#tSaved').textContent = ''; $('#tAt').value = ''; setTWhen('now');
+  openSheet('#shThread'); drawThread();
+}
+function drawThread() {
+  const box = $('#tParts'), n = TH.parts.length;
+  box.querySelectorAll('video').forEach(v => v.pause());
+  box.innerHTML = TH.parts.map((p, i) => {
+    const r = p.aspect ? 1 / p.aspect : 1;
+    const m = !p.media ? '' : p.kind === 'video'
+      ? `<div class="tm" data-i="${i}" style="aspect-ratio:${r}"><video src="${p.media}" poster="${p.thumb || ''}" muted loop playsinline preload="none"></video><div class="play"><svg viewBox="0 0 24 24"><path d="M8 5l12 7-12 7z"/></svg></div></div>`
+      : `<div class="tm" style="aspect-ratio:${r}"><img src="${p.media}" alt="" loading="lazy"></div>`;
+    const alts = [...new Set((p.alts || []).filter(a => a && a !== p.text))];
+    return `<div class="tp"><div class="tn">${i + 1}</div><div class="tb"><div class="tr">${m}
+      <textarea data-i="${i}" rows="2" autocapitalize="sentences" spellcheck="true" placeholder="${p.media ? 'Text for this post' : 'Text post'}">${esc(p.text)}</textarea></div>
+      ${alts.length ? `<div class="tchips">${alts.map(a => `<button class="chip" data-i="${i}">${esc(a)}</button>`).join('')}</div>` : ''}
+      <div class="tf"><span class="nm" data-c="${i}"></span>
+        <button data-up="${i}" aria-label="Move up"${i === 0 ? ' disabled' : ''}>↑</button><button data-dn="${i}" aria-label="Move down"${i === n - 1 ? ' disabled' : ''}>↓</button><button data-rm="${i}" aria-label="Remove from thread"${n < 2 ? ' disabled' : ''}>×</button></div>
+    </div></div>`;
+  }).join('') + `<div class="tadd"><button id="tAddText">+ Text post</button><button id="tAddPiece">+ Piece</button></div>
+    <div class="tlinks"><button id="tAsk">Ask your agent to change it</button><button id="tSplit">Delete thread</button></div>`;
+  box.querySelectorAll('textarea').forEach(ta => { tAuto(ta); ta.oninput = () => { const i = +ta.dataset.i; TH.parts[i].text = ta.value; tAuto(ta); tCount(i); tTouch(); }; });
+  TH.parts.forEach((_, i) => tCount(i));
+  box.querySelectorAll('.tm[data-i]').forEach(d => d.onclick = () => { const v = d.querySelector('video'); if (v.paused) { box.querySelectorAll('video').forEach(o => { if (o !== v) { o.pause(); o.parentNode.classList.remove('on'); } }); v.play().catch(() => {}); d.classList.add('on'); } else { v.pause(); d.classList.remove('on'); } box.querySelectorAll('textarea').forEach(tAuto); });
+  box.querySelectorAll('.tchips .chip').forEach(b => b.onclick = () => { TH.parts[+b.dataset.i].text = b.textContent; tTouch(); drawThread(); });
+  box.querySelectorAll('[data-up]').forEach(b => b.onclick = () => tMove(+b.dataset.up, -1));
+  box.querySelectorAll('[data-dn]').forEach(b => b.onclick = () => tMove(+b.dataset.dn, 1));
+  box.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { const p = TH.parts[+b.dataset.rm]; TH.parts.splice(+b.dataset.rm, 1); tTouch(true); drawThread(); toast(p.num != null ? `#${p.num} is back in the feed` : 'Removed'); });
+  $('#tAddText').onclick = () => { TH.parts.push({itemId: null, text: ''}); drawThread(); const t = box.querySelectorAll('textarea'); t[t.length - 1].focus(); };
+  $('#tAddPiece').onclick = openPick;
+  $('#tAsk').onclick = () => { editThread = TH.card; flushThread(); $('#shThread').classList.remove('on'); sheetOpen = null; $('#eTxt').placeholder = 'What should change across the thread?'; $('#eTxt').value = ''; resetRefs('e'); openSheet('#shEdit'); setTimeout(() => $('#eTxt').focus({preventScroll: true}), 320); };
+  $('#tSplit').onclick = async () => { const t = TH; try { await flushThread(); await api('/api/thread', {id: t.threadId, action: 'split'}); TH = null; closeSheet(true); toast('Thread deleted. The pieces are still in your feed'); load(); } catch (e) { toast(e.message); } };
+  updTGo();
+}
+function tCount(i) {
+  const el = $(`[data-c="${i}"]`); if (!el) return; const p = TH.parts[i], n = (p.text || '').trim().length;
+  el.innerHTML = `${p.num != null ? '#' + esc(p.num) : 'Text'}${n > 280 ? ` · <span class="${n > CAP_MAX ? 'over' : ''}">${n} chars</span>` : ''}`;
+  updTGo();
+}
+function tMove(i, d) { const [p] = TH.parts.splice(i, 1); TH.parts.splice(i + d, 0, p); tTouch(true); drawThread(); }
+function tPayload() { return TH.parts.map(p => ({itemId: p.itemId, text: p.text || ''})); }
+function tTouch(now) { tDirty = true; $('#tSaved').textContent = 'Saving…'; clearTimeout(tSaveT); tSaveT = setTimeout(flushThread, now ? 0 : 700); }
+async function flushThread() {
+  clearTimeout(tSaveT); if (!TH || !tDirty) return tSaving;
+  tDirty = false; const t = TH, parts = tPayload(), title = $('#tTitle').value.trim() || t.title;
+  tSaving = api('/api/thread', {id: t.threadId, action: 'save', parts, title}).then(r => { if (TH === t && !tDirty) $('#tSaved').textContent = 'Saved'; t.card.title = title; t.card.parts = t.parts.map(p => ({...p})); return r; }).catch(e => { tDirty = true; if (TH === t) $('#tSaved').textContent = 'Not saved'; toast(e.message); throw e; });
+  return tSaving;
+}
+function setTWhen(w) { tWhenV = w; document.querySelectorAll('#tWhen button').forEach(b => b.classList.toggle('on', b.dataset.w === w)); $('#tAt').hidden = w !== 'later'; if (w === 'later' && !$('#tAt').value) $('#tAt').value = nextHour(); if (TH) updTGo(); }
+function updTGo() {
+  if (!TH) return; const n = TH.parts.length, bad = TH.parts.some(p => (p.text || '').length > CAP_MAX || (!p.itemId && !(p.text || '').trim())) || !(TH.parts[0]?.text || '').trim();
+  $('#tGo').disabled = !n || bad || (tWhenV === 'later' && !$('#tAt').value);
+  $('#tGo').textContent = tWhenV === 'later' && $('#tAt').value ? `Schedule ${n} posts for ${fmtTime(new Date($('#tAt').value).toISOString())}` : `Post thread (${n})`;
+}
+document.querySelectorAll('#tWhen button').forEach(b => b.onclick = () => setTWhen(b.dataset.w));
+$('#tAt').oninput = updTGo; $('#tTitle').oninput = () => tTouch();
+$('#tClose').onclick = async () => { const t = TH; try { await flushThread(); } catch {} TH = null; $('#tParts').innerHTML = ''; closeSheet(true); snapBack(); if (t) { const k = ITEMS.findIndex(x => x.id === t.id); if (k === idx) render(); } if (wantMerge) mergeFeed(); };
+$('#tGo').onclick = async () => {
+  const t = TH; if (!t) return; $('#tGo').disabled = true;
+  const scheduleAt = tWhenV === 'later' ? new Date($('#tAt').value).toISOString() : null;
+  try {
+    clearTimeout(tSaveT); await tSaving?.catch(() => {}); tDirty = false;
+    await api('/api/thread', {id: t.threadId, action: 'post', parts: tPayload(), title: $('#tTitle').value.trim() || t.title, scheduleAt});
+    const k = ITEMS.findIndex(x => x.id === t.id); if (k >= 0) { handled.set(t.id, Date.now()); ITEMS.splice(k, 1); if (k < idx) idx--; }
+    t.parts.forEach(p => p.itemId && handled.set(p.itemId, Date.now()));
+    TH = null; $('#tParts').innerHTML = ''; closeSheet(true); render();
+    toast(scheduleAt ? 'Scheduled ' + fmtTime(scheduleAt) : (POST_HOLD ? `Posting ${t.parts.length} posts in 30 s, or ${fmtMin(HOLD_MIN)} after your last post` : `Posting ${t.parts.length} posts in 30 s`), () => undoThreadPost(t), scheduleAt ? 8000 : 90000);
+    refreshDot();
+  } catch (e) { toast(e.message); updTGo(); }
+};
+async function openPick() {
+  try { await flushThread(); } catch { return; }
+  let fresh = []; try { fresh = (await api('/api/feed')).items; } catch (e) { return toast(e.message); }
+  const have = new Set(TH.parts.map(p => p.itemId)), list = fresh.filter(x => !x.thread && !have.has(x.id));
+  $('#pickList').innerHTML = list.length ? list.map((it, i) => `<div class="row">${it.thumb ? `<img src="${it.thumb}" alt="">` : '<div class="ic">#</div>'}<div class="b"><div class="t">${esc(it.caption || it.title)}</div><div class="s">#${esc(it.num ?? '')}</div></div><button class="a" data-i="${i}">Add</button></div>`).join('') : '<div class="sec">No other cards in the feed</div>';
+  $('#pickList').querySelectorAll('button[data-i]').forEach(b => b.onclick = () => {
+    const it = list[+b.dataset.i]; TH.parts.push({itemId: it.id, text: it.caption || '', num: it.num, kind: it.kind, aspect: it.aspect, media: it.media, thumb: it.thumb, alts: it.alts});
+    $('#shPick').classList.remove('on'); tTouch(true); drawThread();
+  });
+  $('#shPick').classList.add('on');
+}
+$('#pickClose').onclick = () => $('#shPick').classList.remove('on');
+// Make a thread from the pieces you tick: this card is ticked, its batch-mates are listed first, then the rest of the feed.
+let MK = null;
+async function makeThread(it) {
+  let fresh = ITEMS; try { fresh = (await api('/api/feed')).items; } catch {}
+  const pool = fresh.filter(x => !x.thread), same = pool.filter(x => x.id !== it.id && it.batch && x.batch === it.batch), rest = pool.filter(x => x.id !== it.id && !(it.batch && x.batch === it.batch));
+  const list = [it, ...same.sort((a, b) => (a.num ?? 0) - (b.num ?? 0)), ...rest];
+  MK = {list, on: new Set([it.id])};
+  $('#makeList').innerHTML = list.map((x, i) => `<label class="row mkrow">${x.thumb ? `<img src="${x.thumb}" alt="">` : '<div class="ic">#</div>'}<div class="b"><div class="t">${esc(x.caption || x.title)}</div><div class="s">#${esc(x.num ?? '')}${i && x.batch && x.batch === it.batch ? ' · same batch' : ''}</div></div><input type="checkbox" data-i="${i}"${i === 0 ? ' checked' : ''}></label>`).join('');
+  $('#makeList').querySelectorAll('input[data-i]').forEach(c => c.onchange = () => { const x = MK.list[+c.dataset.i]; c.checked ? MK.on.add(x.id) : MK.on.delete(x.id); updMake(); });
+  updMake(); openSheet('#shMake');
+}
+function updMake() { const n = MK ? MK.on.size : 0; $('#makeGo').textContent = n ? `Make thread (${n})` : 'Pick a piece'; $('#makeGo').disabled = !n; }
+$('#makeClose').onclick = () => closeSheet();
+$('#makeGo').onclick = async () => {
+  if (!MK || !MK.on.size) return;
+  const ids = MK.list.filter(x => MK.on.has(x.id)).map(x => x.id); $('#makeGo').disabled = true;
+  try { const r = await api('/api/thread', {action: 'make', itemIds: ids, itemId: ids[0]}); closeSheet(); await load(); openThread(r.thread); }
+  catch (e) { toast(e.message); updMake(); }
+};
+
 // ---------- activity ----------
 const LABEL = {
+  thread: {queued: 'Posting soon', scheduled: 'Scheduled', claimed: 'Posting…', posting: 'Posting…', posted: 'Posted', done: 'Posted', failed: 'Failed'},
   post: {queued: 'Posting soon', scheduled: 'Scheduled', claimed: 'Posting…', posting: 'Posting…', posted: 'Posted', done: 'Posted', failed: 'Failed'},
   edit: {queued: 'Waiting for your agent', claimed: 'Sending to your agent', sent: 'Sent to your agent', working: 'Your agent is reworking it', done: 'Updated', failed: 'Failed'},
   batch: {queued: 'Waiting for your agent', claimed: 'Sending to your agent', sent: 'Sent to your agent', working: 'Your agent is working on it', done: 'Done', failed: 'Failed'},
 };
 async function refreshDot() { try { const d = await api('/api/feed'); $('#actDot').hidden = !d.open; $('#actDot').classList.toggle('bad', d.failed > 0); } catch {} }
+$('#holdSw').onclick = async () => {
+  const next = !POST_HOLD; $('#holdSw').disabled = true;
+  try { await api('/api/settings', {postHold: next}); POST_HOLD = next; showHold(); toast(next ? `Posts wait ${fmtMin(HOLD_MIN)} after your last one` : 'Posts no longer wait; held posts go out next'); }
+  catch (e) { toast(e.message); } finally { $('#holdSw').disabled = false; }
+};
+// Gap stepper: saves 700 ms after the last tap, so stepping 30 to 15 is one request.
+let holdMinTimer = null;
+function stepHold(dir) {
+  const i = HOLD_STEPS.findIndex(v => v >= HOLD_MIN);
+  const cur = i < 0 ? HOLD_STEPS.length - 1 : (HOLD_STEPS[i] === HOLD_MIN ? i : (dir < 0 ? i : i - 1));
+  HOLD_MIN = HOLD_STEPS[Math.max(0, Math.min(HOLD_STEPS.length - 1, cur + dir))]; holdMinDirty = true; showHold();
+  clearTimeout(holdMinTimer);
+  holdMinTimer = setTimeout(async () => {
+    const want = HOLD_MIN;
+    try { const r = await api('/api/settings', {postHoldMin: want}); if (HOLD_MIN === want) { HOLD_MIN = r.postHoldMin; holdMinDirty = false; showHold(); toast(POST_HOLD ? `Posts wait ${fmtMin(HOLD_MIN)} after your last one` : `Gap set to ${fmtMin(HOLD_MIN)} (hold is off)`); } }
+    catch (e) { holdMinDirty = false; toast(e.message); }
+  }, 700);
+}
+$('#holdMinus').onclick = () => stepHold(-1);
+$('#holdPlus').onclick = () => stepHold(1);
 async function openAct() {
   openSheet('#shAct'); $('#actList').innerHTML = '<div class="sec">Loading…</div>';
   try {
     const {requests} = await api('/api/activity');
-    const isLater = r => r.kind === 'post' && r.status === 'queued' && new Date(r.runAt) > Date.now() + 60000;
+    const isLater = r => (r.kind === 'post' || r.kind === 'thread') && r.status === 'queued' && new Date(r.runAt) > Date.now() + 60000;
     const groups = [['Needs attention', r => r.status === 'failed'], ['Scheduled', isLater], ['In progress', r => !isLater(r) && !['done', 'posted', 'failed'].includes(r.status)], ['Done', r => ['done', 'posted'].includes(r.status)]];
     let html = '';
     for (const [name, f] of groups) {
@@ -500,19 +915,21 @@ async function openAct() {
   } catch (e) { $('#actList').innerHTML = `<div class="sec">${esc(e.message)}</div>`; }
 }
 function row(r) {
-  const st = isFinite(new Date(r.runAt)) && r.kind === 'post' && r.status === 'queued' && new Date(r.runAt) > Date.now() + 60000 ? 'Scheduled ' + fmtTime(r.runAt) : (LABEL[r.kind] || {})[r.status] || r.status;
-  const title = r.kind === 'batch' ? `Batch of ${r.payload.count || 10}${r.payload.text ? ': ' + r.payload.text : ''}` : r.kind === 'edit' ? `Edit #${r.num}: ${r.payload.text || ''}` : (r.payload.caption || r.title || '');
+  const st = isFinite(new Date(r.runAt)) && (r.kind === 'post' || r.kind === 'thread') && r.status === 'queued' && new Date(r.runAt) > Date.now() + 60000 ? 'Scheduled ' + fmtTime(r.runAt) : (LABEL[r.kind] || {})[r.status] || r.status;
+  const title = r.kind === 'batch' ? `Batch of ${r.payload.count || 10}${r.payload.text ? ': ' + r.payload.text : ''}` : r.kind === 'edit' ? (r.payload.thread ? `Edit thread: ${r.payload.text || ''}` : `Edit #${r.num}: ${r.payload.text || ''}`) : r.kind === 'thread' ? `Thread (${(r.payload.parts || []).length}): ${r.payload.caption || ''}` : (r.payload.caption || r.title || '');
   const ni = (r.payload.images || []).length, imgs = ni ? `${ni} image${ni > 1 ? 's' : ''} · ` : '';
-  const sub = imgs + (r.status === 'failed' ? (r.result || 'Failed') : r.status === 'done' && r.result ? `${st} · ${r.result}` : `${st} · ${ago(r.updated)}`);
+  const sub = imgs + (r.status === 'failed' ? (r.result || 'Failed') : r.kind === 'thread' && r.result ? r.result : r.status === 'done' && r.result ? `${st} · ${r.result}` : `${st} · ${ago(r.updated)}`);
   let a = '';
-  if (r.kind === 'post' && r.url) a = `<a class="a" href="${esc(r.url)}" target="_blank" rel="noopener">View</a>`;
-  else if (r.status === 'failed') a = `<button class="a" data-act="retry" data-id="${r.id}">Retry</button>`;
+  const isPostReq = r.kind === 'post' || r.kind === 'thread', inFlight = ['queued', 'claimed', 'posting'].includes(r.status);
+  if (isPostReq && inFlight) a = `<button class="a" data-act="cancel" data-id="${r.id}">${r.url ? 'Stop' : 'Undo'}</button>`;
+  else if (isPostReq && r.url && r.status !== 'failed') a = `<a class="a" href="${esc(r.url)}" target="_blank" rel="noopener">View</a>`;
+  else if (r.status === 'failed') a = `<button class="a" data-act="retry" data-id="${r.id}">Retry</button>` + (isPostReq && !r.url ? `<button class="a" data-act="cancel" data-id="${r.id}">Undo</button>` : '');
   else if (r.status === 'queued') a = `<button class="a" data-act="cancel" data-id="${r.id}">Cancel</button>`;
   const pic = r.thumb ? `<img src="${r.thumb}" alt="">` : `<div class="ic">${r.kind === 'batch' ? '+' : '✎'}</div>`;
   return `<div class="row">${pic}<div class="b"><div class="t">${esc(title)}</div><div class="s${r.status === 'failed' ? ' bad' : ''}">${esc(sub)}</div></div>${a}</div>`;
 }
 async function reqAction(id, action) {
-  try { await api('/api/request', {id, action}); toast(action === 'cancel' ? 'Canceled' : 'Retrying'); if (action === 'cancel') load(); openAct(); refreshDot(); }
+  try { const x = await api('/api/request', {id, action}); toast(action !== 'cancel' ? 'Retrying' : x.stopped ? `Stopped: ${x.up} of ${x.of} posts are up` : 'Stopped. Back in your feed as a draft'); if (action === 'cancel') { handled.clear(); load(); } openAct(); refreshDot(); }
   catch (e) { toast(e.message); }
 }
 $('#bAct').onclick = openAct;

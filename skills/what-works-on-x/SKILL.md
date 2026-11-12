@@ -32,6 +32,11 @@ Check each idea against all four:
 5. **Publish each draft as soon as it's ready**, without waiting for the batch:
    `node agent/feed.mjs new <slug> --batch <name>`, then add the file and fill in `meta.json`, then `node agent/feed.mjs publish <piece>`.
 
+Two optional shapes:
+
+- **Quote post.** If a draft answers a specific X post, add `"quote": {"url", "handle", "name", "text"}` to its `meta.json`, with `text` copied word for word. The owner sees the quoted post in the app and can change or clear the link.
+- **Thread.** If several drafts make one argument, publish each one, then draft the thread: `node agent/feed.mjs thread put <id> <file.json>` with `{"title", "parts": [{"num", "text"}]}`. Only do this when the pieces need each other; separate posts are the default.
+
 A batch is done when every draft is in the app and you've named the owner's opinion each one rests on. Publishing never posts. Only the owner's swipe does.
 
 ## Learn from the owner

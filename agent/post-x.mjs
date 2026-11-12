@@ -1,46 +1,48 @@
-// Post one video/image to X through Codex driving Chrome. A cheap model runs the script; it reasons more on the fallback.
+// Post one video/image (or text only) to X through Codex driving Chrome. A cheap model runs the script; it reasons more on the fallback.
 // Attempt 1 runs the fast scripted path (x-post-script.js). If that fails without posting, the model does the post
 // itself with the browser tools, persistently. Any X tabs an attempt opened are closed afterwards; no windows are opened.
-// node post-x.mjs <mediaPath> <captionFile> [--dry-run]  -> prints one JSON line {ok, url?, error?, posted?}
+// --reply-to makes it a reply (a thread part), --quote a quote post, --anchor keeps one tab group for a whole thread,
+// --cancel-file names the file the agent writes when you undo a post in flight.
+// node post-x.mjs <mediaPath|none> <captionFile> [--dry-run] [--reply-to <statusUrl>] [--quote <statusUrl>] [--anchor] [--cancel-file <path>]  -> prints one JSON line {ok, url?, error?, posted?}
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { run, FEED, LOG_DIR, X_HANDLE, POST_MODEL } from './lib.mjs';
-const [media, capFile, flag] = process.argv.slice(2);
-const dry = flag === '--dry-run';
+const argv = process.argv.slice(2), [mediaArg, capFile] = argv, media = mediaArg === 'none' ? null : mediaArg;
+const useAnchor = argv.includes('--anchor');
+const cancelFile = argv.includes('--cancel-file') ? argv[argv.indexOf('--cancel-file') + 1] : null;
+const dry = argv.includes('--dry-run'), replyTo = argv.includes('--reply-to') ? argv[argv.indexOf('--reply-to') + 1] : null;
+const quoteArg = argv.includes('--quote') ? argv[argv.indexOf('--quote') + 1] : null, quote = quoteArg && /^https:\/\/(x|twitter)\.com\/\w+\/status\/\d+/.test(quoteArg) ? quoteArg.match(/^https:\/\/(?:x|twitter)\.com\/\w+\/status\/\d+/)[0] : null;
 const caption = fs.readFileSync(capFile, 'utf8').trim();
 const LOG = path.join(LOG_DIR, 'post-x.log');
 const osa = src => { try { return execFileSync('/usr/bin/osascript', ['-e', src], {encoding: 'utf8', timeout: 30000}).trim(); } catch { return ''; } };
 const tabIds = () => new Set(osa('set out to ""\ntell application "Google Chrome"\nrepeat with w in windows\nrepeat with t in tabs of w\nset out to out & (id of t) & ","\nend repeat\nend repeat\nend tell\nreturn out').split(',').filter(Boolean));
-// Every attempt resumes one long-lived Codex session that owns the poster tab, which sits in its own background agent tab
-// group ("📣 Feed poster", URL marker feedposter=1) so it never lands in or focuses the owner's windows. A tab stays bound to the
-// session that opened it, so the session is reused. After MAX_RUNS the session rotates: its tab (and so its group) is closed
-// and the next session opens a fresh one. Groups are created once per rotation, not per post (per-post tab groups synced across machines and crashed Chrome).
+// Every attempt resumes one long-lived Codex session. Its worker tab opens in the session's own background agent tab group
+// ("📣 Feed poster", URL marker feedposter=1), so it never lands in or focuses your windows, and it closes when the run ends.
+// After MAX_RUNS the session rotates and the next attempt starts a fresh one.
 const STATE = path.join(LOG_DIR, 'poster-state.json'), MAX_RUNS = 40;
 let st = (() => { try { return JSON.parse(fs.readFileSync(STATE, 'utf8')); } catch { return {}; } })();
 const saveState = () => fs.writeFileSync(STATE, JSON.stringify(st, null, 1));
 const closeMarkerTabs = () => osa('tell application "Google Chrome"\nrepeat with w in windows\nrepeat with i from (count of tabs of w) to 1 by -1\nif (URL of tab i of w) contains "feedposter=1" then close tab i of w\nend repeat\nend repeat\nend tell');
-if (st.session && (st.runs || 0) >= MAX_RUNS) { closeMarkerTabs(); st = {}; saveState(); }
-// The poster works in its own hidden Chrome window (AppleScript visible=false) (found by its marker tab, feedposter=1), never in the owner's windows.
-// Made once if missing; each run then adds a fresh tab there, files it into the window's "📣 Feed poster" group and closes
-// the previous one, so the group itself is never re-created (per-post groups crashed another machine's Chrome via Sync).
-const POSTER_URL = `https://x.com/${X_HANDLE}?feedposter=1`;
-const ensurePosterWindow = () => osa(`tell application "Google Chrome"\nrepeat with w in windows\nrepeat with t in tabs of w\nif (URL of t) contains "feedposter=1" then return "ok"\nend repeat\nend repeat\nset nw to make new window\nset nid to (id of nw)\nset URL of active tab of (window id nid) to "${POSTER_URL}"\nset visible of (window id nid) to false\nreturn "made"\nend tell`);
-ensurePosterWindow();
-const hidePosterWindow = () => { try { osa('tell application "Google Chrome"\nset ids to {}\nrepeat with w in windows\nrepeat with t in tabs of w\nif (URL of t) contains "feedposter=1" then set end of ids to (id of w)\nend repeat\nend repeat\nrepeat with i in ids\nset visible of (window id i) to false\nend repeat\nend tell'); } catch {} };
-hidePosterWindow();
+const closeAnchors = () => osa('tell application "Google Chrome"\nrepeat with w in windows\nrepeat with i from (count of tabs of w) to 1 by -1\nif (URL of tab i of w) contains "feedanchor=1" then close tab i of w\nend repeat\nend repeat\nend tell');
+if (st.session && (st.runs || 0) >= MAX_RUNS) { closeMarkerTabs(); closeAnchors(); st = {}; saveState(); }
 // close tabs that appeared during this attempt and point at X (or are blank); never touch tabs that existed before
 function cleanup(before) {
   const listing = osa('set out to ""\ntell application "Google Chrome"\nrepeat with w in windows\nrepeat with t in tabs of w\nset out to out & (id of t) & "|" & (URL of t) & linefeed\nend repeat\nend repeat\nend tell\nreturn out');
   for (const line of listing.split('\n')) {
     const [id, url = ''] = line.split('|');
-    if (id && !before.has(id) && !url.includes('feedposter=1') && /^(https:\/\/(x|twitter)\.com\/|chrome:\/\/newtab|about:blank)/.test(url)) osa(`tell application "Google Chrome"\nrepeat with w in windows\nrepeat with t in tabs of w\nif (id of t as text) is "${id}" then close t\nend repeat\nend repeat\nend tell`);
+    if (id && !before.has(id) && !url.includes('feedposter=1') && !url.includes('feedanchor=1') && /^(https:\/\/(x|twitter)\.com\/|chrome:\/\/newtab|about:blank)/.test(url)) osa(`tell application "Google Chrome"\nrepeat with w in windows\nrepeat with t in tabs of w\nif (id of t as text) is "${id}" then close t\nend repeat\nend repeat\nend tell`);
   }
 }
 const svc = (fs.readFileSync(path.join(process.env.HOME, '.codex/config.toml'), 'utf8').match(/NODE_REPL_TRUSTED_SERVICES = '\{"browser":"([^"]+)"\}'/) || [])[1] || '';
-const CLIENT = path.join(path.dirname(svc), 'browser-client.mjs');
-const fill = s => s.replaceAll('__MEDIA__', JSON.stringify(media)).replaceAll('__CAPTION__', JSON.stringify(caption)).replaceAll('__DRY__', String(dry)).replaceAll('__CLIENT__', JSON.stringify(CLIENT)).replaceAll('__TABID__', JSON.stringify(st.tabId || null)).replaceAll('__HANDLE__', JSON.stringify(X_HANDLE));
+// The configured plugin version can vanish after a Codex update; fall back to the newest browser client still on disk.
+const newestClient = () => { const base = path.join(process.env.HOME, '.codex/plugins/cache/openai-bundled'); const found = [];
+  for (const pl of ['browser', 'chrome']) { let vs = []; try { vs = fs.readdirSync(path.join(base, pl)); } catch {} for (const v of vs) { const f = path.join(base, pl, v, 'scripts/browser-client.mjs'); try { found.push([fs.statSync(f).mtimeMs, f]); } catch {} } }
+  return found.sort((a, b) => b[0] - a[0])[0]?.[1]; };
+const CONFIG_CLIENT = path.join(path.dirname(svc), 'browser-client.mjs');
+const CLIENT = fs.existsSync(CONFIG_CLIENT) ? CONFIG_CLIENT : (newestClient() || CONFIG_CLIENT);
+const fill = s => s.replaceAll('__MEDIA__', JSON.stringify(media)).replaceAll('__CAPTION__', JSON.stringify(caption)).replaceAll('__ANCHOR__', String(useAnchor)).replaceAll('__CANCEL__', JSON.stringify(dry ? null : cancelFile)).replaceAll('__DRY__', String(dry)).replaceAll('__CLIENT__', JSON.stringify(CLIENT)).replaceAll('__TABID__', JSON.stringify(st.tabId || null)).replaceAll('__REPLY__', JSON.stringify(replyTo)).replaceAll('__QUOTE__', JSON.stringify(quote)).replaceAll('__HANDLE__', JSON.stringify(X_HANDLE));
 // the filled script goes in a module file so the model only has to run one short line (it used to retype ~9 KB and sometimes mangled it)
 const scriptFile = path.join(os.tmpdir(), `x-post-${process.pid}-${Date.now()}.mjs`);
 fs.writeFileSync(scriptFile, fill('export default async function (nodeRepl) {\n' + fs.readFileSync(path.join(FEED, 'agent/x-post-script.js'), 'utf8') + '\n}\n'));
@@ -64,27 +66,33 @@ What has worked: get the poster tab as above; await tab.goto(url); const cdp = a
 Rules:
 - Use the poster's own tab in its background agent tab group: const t = (await chrome.user.openTabs()).find(x => String(x.url).includes("feedposter=1")); const tab = t ? await chrome.user.claimTab(t) : (await chrome.nameSession("📣 Feed poster"), await chrome.tabs.new()); (claiming keeps it in its group; tabs.new() puts a new one in the agent group in the background). Tab ids from earlier runs are not valid here. Open at most one tab. Never claim, open in, focus or show the owner's own tabs or windows, and never make the browser visible. Do not close the poster tab; when finished, navigate it back to https://x.com/${X_HANDLE}?feedposter=1. Never touch any other tabs.
 - FIRST open https://x.com/${X_HANDLE} and check the newest ~8 posts: if one already starts with the same first 100 characters as this caption (long posts are cut off with "Show more" on the profile, so compare only the start), do NOT post again; answer with its URL. Click Post at most once in total, ever: if anything is unclear after clicking, check the profile and report, never click Post a second time.
-- Attach this file: ${media}
+${replyTo ? `- THIS POST IS A REPLY in a thread. It must reply to ${replyTo}: open that URL and use its inline "Post your reply" box. It must never go out as a standalone post. Check that post's replies, not the profile, for an existing copy.\n` : ''}${quote ? `- THIS IS A QUOTE POST of ${quote}. After the caption, on its own last line, put that link (or open that post and use Repost > Quote). Before posting, the composer must show the quoted post as a card under the text. The published post's text will not include the link.\n` : ''}${media ? `- Attach this file: ${media}` : '- Text only: no media.'}
 - Caption, exactly (keep line breaks, add nothing):
 <<<CAPTION
 ${caption}
 CAPTION>>>
-- Post once only. Get the new post's URL from the "Your post was sent" toast or from the profile.
+${cancelFile && !dry ? `- Immediately before clicking Post, check whether the file ${cancelFile} exists. If it does, do not post: stop and report {"ok":false,"error":"undone","posted":false}. If not, create ${cancelFile}.clicked and click.\n` : ''}- Post once only. Get the new post's URL from the "Your post was sent" toast or from the profile.
 
 Final answer: exactly one JSON line: ${dry ? '{"ok":true,"dryRun":true} or {"ok":false,"error":"...","posted":false}' : '{"ok":true,"url":"https://x.com/'+X_HANDLE+'/status/<id>"} or {"ok":false,"error":"...","posted":<true|false|null>}'}`;
 
+// Undo: the agent sends SIGTERM. Kill Codex and its browser REPL, then let the exit handler close the tabs.
+let codexChild = null, lastBefore = null;
+process.on('SIGTERM', () => {
+  try { if (codexChild?.pid) { execFileSync('/usr/bin/pkill', ['-TERM', '-P', String(codexChild.pid)], {stdio: 'ignore'}); } } catch {}
+  try { codexChild?.kill('SIGTERM'); } catch {}
+  process.exit(143);
+});
 async function attempt(label, prompt, effort, timeoutMs) {
   const outFile = path.join(os.tmpdir(), `post-x-${process.pid}-${label}.txt`);
-  const before = tabIds();
+  const before = tabIds(); lastBefore = before;
   const common = ['-m', POST_MODEL, '-c', `model_reasoning_effort="${effort}"`, '--dangerously-bypass-approvals-and-sandbox', '--skip-git-repo-check', '-o', outFile];
   const args = st.session ? ['exec', 'resume', st.session, ...common, prompt] : ['exec', ...common, '-C', FEED, prompt];
-  const {code, out} = await run(process.env.HOME + '/.local/bin/codex', args, {timeoutMs, input: '', cwd: FEED});
+  const {code, out} = await run(process.env.HOME + '/.local/bin/codex', args, {timeoutMs, input: '', cwd: FEED, onSpawn: c => { codexChild = c; }});
   const sid = (out.match(/session id: ([0-9a-f-]{36})/) || [])[1];
   if (sid && sid !== st.session) st = {session: sid, tabId: null, runs: 0};
   else if (!sid && st.session) st = {};  // resume failed (session gone): start fresh next attempt
   st.runs = (st.runs || 0) + 1; saveState();
   cleanup(before);
-  hidePosterWindow();
   fs.appendFileSync(LOG, `\n==== ${new Date().toISOString()} ${label} ${media} dry=${dry} code=${code}\n${out.slice(-5000)}\n`);
   try {
     const txt = fs.readFileSync(outFile, 'utf8');
@@ -95,8 +103,10 @@ async function attempt(label, prompt, effort, timeoutMs) {
   } catch { return {ok: false, error: `${label}: no result (codex exited ${code})`, posted: null}; }
 }
 
+// Leave nothing behind: when this process ends, every poster tab goes. The next post opens its own.
+process.on('exit', () => { closeMarkerTabs(); closeMarkerTabs(); if (!useAnchor) closeAnchors(); if (lastBefore) cleanup(lastBefore); });  // twice: closing a tab can reshuffle the list mid-loop
 let res = await attempt('scripted', scriptedPrompt, 'low', 15 * 60000);
-if (!res.ok && res.posted === false && !/clicked Post/.test(JSON.stringify(res.log || []))) {
+if (!res.ok && res.posted === false && !/clicked Post/.test(JSON.stringify(res.log || [])) && !(cancelFile && fs.existsSync(cancelFile))) {
   const fb = await attempt('agentic', agentPrompt(res.error), 'medium', 35 * 60000);
   res = fb.ok ? {...fb, note: 'agentic fallback'} : {...fb, error: `scripted: ${res.error} | agentic: ${fb.error}`};
 }
