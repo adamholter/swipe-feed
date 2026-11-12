@@ -90,6 +90,16 @@ for (const mode of ['sites', 'cloudflare-access']) {
   const later = new Date(Date.now() + 20 * 60000).toISOString();
   ok((await call('/api/agent/reschedule', {id: r.requestId, runAt: later})).ok, T('agent reschedules a held post'));
   ok((await call('/api/activity')).requests.find(x => x.id === r.requestId)?.runAt === later, T('activity shows the held time'));
+  // drag to reorder: same times, new order
+  {
+    const r2 = await call('/api/decide', {id: 'i3', action: 'post', caption: 'third'}), later2 = new Date(Date.now() + 50 * 60000).toISOString();
+    await call('/api/agent/reschedule', {id: r2.requestId, runAt: later2});
+    const ro = await call('/api/reorder', {ids: [r2.requestId, r.requestId]});
+    const act = (await call('/api/activity')).requests;
+    ok(ro.ok && act.find(x => x.id === r2.requestId).runAt === later && act.find(x => x.id === r.requestId).runAt === later2, T('reorder swaps the two times'));
+    ok((await call('/api/reorder', {ids: [r.requestId, 'nope']})).status === 409 && (await call('/api/reorder', {ids: [r.requestId]})).status === 400, T('reorder refuses unknown or too few ids'));
+    await call('/api/decide', {id: 'i3', action: 'undo'});
+  }
   ok((await call('/api/decide', {id: 'i4', action: 'undo'})).ok && one(db, 'SELECT status FROM requests WHERE id = ?', r.requestId).status === 'canceled', T('a held post can be undone'));
 
   // ---- threads ----

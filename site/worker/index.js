@@ -265,6 +265,21 @@ async function activity(env) {
     thumb: thumb && '/m/' + thumb, payload, runAt: r.run_at, url: r.tweet_url || r.thread_url || null, created: r.created_at, updated: r.updated_at}; });
 }
 
+// Drag to reorder in the Activity sheet: the waiting posts keep the same set of times, handed out in the new order.
+async function reorder(env, b) {
+  const ids = Array.isArray(b.ids) ? [...new Set(b.ids.map(String))] : [];
+  if (ids.length < 2 || ids.length > 90) return bad('ids must list 2 to 90 waiting posts');
+  const t = now();
+  const {results} = await env.DB.prepare(`SELECT id, run_at FROM requests WHERE kind IN ('post', 'thread') AND status = 'queued' AND run_at > ? AND id IN (${ids.map(() => '?').join(',')})`).bind(t, ...ids).all();
+  if (results.length !== ids.length) return bad('The queue changed, try again', 409);
+  const times = results.map(r => r.run_at).sort(), st = [];
+  ids.forEach((id, i) => st.push(
+    env.DB.prepare(`UPDATE requests SET run_at = ?, updated_at = ? WHERE id = ? AND status = 'queued'`).bind(times[i], t, id),
+    env.DB.prepare(`UPDATE decisions SET schedule_at = ?, updated_at = ? WHERE request_id = ? AND status IN ('queued', 'scheduled')`).bind(times[i], t, id)));
+  await env.DB.batch(st);
+  return json({ok: true, order: ids.map((id, i) => ({id, runAt: times[i]}))});
+}
+
 // Post hold: on unless you switch it off in the Activity sheet. The agent applies it (agent/post-hold.mjs).
 async function postHoldOn(env) {
   const row = await env.DB.prepare(`SELECT v FROM kv WHERE k = 'post_hold'`).first();
@@ -599,6 +614,7 @@ export default {
         if (p === '/api/skipped' && m === 'GET') return skipped(env, url);
         if (p === '/api/restore' && m === 'POST') return restore(env, await body(request));
         if (p === '/api/request' && m === 'POST') return requestAction(env, await body(request));
+        if (p === '/api/reorder' && m === 'POST') return reorder(env, await body(request));
         if (p === '/api/upload' && m === 'POST') return upload(request, env);
         if (p === '/api/batch' && m === 'POST') {
           const b = await body(request), count = Math.max(1, Math.min(40, parseInt(b.count, 10) || 10));

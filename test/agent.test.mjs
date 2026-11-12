@@ -22,6 +22,17 @@ ok(H.holdOn(tmp, undefined) === true && H.holdOn(tmp, true) === true && H.holdOn
 fs.writeFileSync(path.join(tmp, 'post-hold.off'), '');
 ok(H.holdOn(tmp, true) === false, 'post-hold.off turns it off');
 H.writeHeld(tmp, {r1: 'x'}); ok(H.readHeld(tmp).r1 === 'x' && JSON.stringify(H.readHeld(path.join(tmp, 'nope'))) === '{}', 'held posts are remembered');
+// one ordered queue: slot came up while held, already placed, chosen just now
+{
+  const iso = m => new Date(now + m * MIN).toISOString(), until = now + 10 * MIN, G = 30 * MIN;
+  const mv = H.planHeld([], [{id: 'a', run_at: iso(10)}, {id: 'b', run_at: iso(40)}], [{id: 'c'}], until, G);
+  ok(JSON.stringify(mv) === JSON.stringify([{id: 'c', at: now + 70 * MIN}]), 'a new post goes after the ones already waiting, not onto a taken slot');
+  const mv2 = H.planHeld([{id: 'a'}], [{id: 'b', run_at: iso(20)}, {id: 'c', run_at: iso(90)}], [], until, G);
+  ok(JSON.stringify(mv2) === JSON.stringify([{id: 'a', at: until}, {id: 'b', at: now + 40 * MIN}]), 'a post whose slot came up keeps first place and pushes only the ones too close behind');
+  const held = {a: iso(10), b: iso(40), c: iso(70)};
+  ok(H.adoptMoved(held, [{id: 'b', run_at: iso(10)}, {id: 'a', run_at: iso(40)}, {id: 'c', run_at: iso(70)}, {id: 'z', run_at: iso(10)}]) && held.a === iso(40) && held.b === iso(10) && !held.z, 'a drag in the app is adopted');
+  ok(!H.adoptMoved(held, [{id: 'c', run_at: iso(300)}]) && held.c === iso(70), 'a post moved to its own time is left alone');
+}
 // timeline: stubbed fetch, never the real service
 let calls = 0; const fake = async u => { calls++; return {ok: true, json: async () => ({results: tl}), url: u}; };
 ok(await H.timelineLast('', fake, now) === 0 && calls === 0, 'no handle, no timeline call');

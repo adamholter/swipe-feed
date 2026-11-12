@@ -27,11 +27,12 @@ async function open(browser, ctxOpts, state) {
     if (u.pathname === '/') return r.fulfill({contentType: 'text/html', body: html});
     if (u.pathname === '/api/feed') return json({items: state.items, agent: {at: new Date().toISOString()}, open: 0, failed: 0, postHold: state.postHold, postHoldMin: state.postHoldMin, captionMax: state.captionMax || 25000});
     if (u.pathname === '/api/pulse') return json({feed: state.sig, reqs: 1, agent: {at: new Date().toISOString()}, open: 0, failed: 0});
-    if (u.pathname === '/api/activity') return json({requests: [], agent: {at: new Date().toISOString()}});
+    if (u.pathname === '/api/activity') return json({requests: state.activity || [], agent: {at: new Date().toISOString()}});
     if (u.pathname.startsWith('/api/')) {
       state.calls.push([u.pathname, body]);
       if (u.pathname === '/api/decide' && body.action !== 'undo') { state.items = state.items.filter(x => x.id !== body.id); state.sig++; }
       if (u.pathname === '/api/defer') { const it = state.items.find(x => x.id === body.id); state.items = state.items.filter(x => x !== it); it.deferred = new Date().toISOString(); state.items.push(it); state.sig++; return json({deferred: it.deferred}); }
+      if (u.pathname === '/api/reorder') { const ts = state.activity.map(x => x.runAt).sort(); body.ids.forEach((id, i) => { state.activity.find(x => x.id === id).runAt = ts[i]; }); return json({ok: true}); }
       if (u.pathname === '/api/settings') { Object.assign(state, body); return json({ok: true, postHold: state.postHold, postHoldMin: state.postHoldMin}); }
       return json({ok: true});
     }
@@ -189,6 +190,25 @@ for (const [name, opts] of [['wide', {viewport: {width: 1920, height: 1080}}], [
   if (name === 'wide') { ok(r.capw <= 721 && Math.abs(r.capMid - r.cardMid) < 2, `wide: caption is a centred column of ${Math.round(r.capw)}px in a ${Math.round(r.cw)}px card`); ok(Math.abs(r.metaL - r.capL) < 2, 'wide: meta line starts under the caption'); }
   else ok(r.capw > 300 && r.capw > r.cw - 60, `phone: caption is full width (${Math.round(r.capw)} of ${Math.round(r.cw)})`);
   ok(errs.length === 0, name + ': no page errors');
+  await p.close();
+}
+// ---- activity: waiting posts sort by time and drag into a new order (phone, touch) ----
+{
+  const st = server(), at = m => new Date(Date.now() + m * 60000).toISOString();
+  st.activity = [['r3', 190], ['r1', 70], ['r2', 130]].map(([id, m]) => ({id, kind: 'post', status: 'queued', payload: {caption: 'post ' + id}, runAt: at(m), created: at(-5), updated: at(-5)}));
+  const {p, errs} = await open(b, PHONE, st);
+  await p.click('#bAct'); await p.waitForTimeout(500);
+  const order = () => p.evaluate(() => [...document.querySelectorAll('#actList .row[data-rid]')].map(x => x.dataset.rid).join());
+  ok(await order() === 'r1,r2,r3', 'activity: waiting posts list the next one first');
+  const h = await p.locator('.row[data-rid="r3"] .hdl').boundingBox(), top = await p.locator('.row[data-rid="r1"]').boundingBox();
+  const cdp = await p.context().newCDPSession(p), pt = (type, y) => cdp.send('Input.dispatchTouchEvent', {type, touchPoints: type === 'touchEnd' ? [] : [{x: h.x + h.width / 2, y}]});
+  await pt('touchStart', h.y + h.height / 2);
+  for (let i = 1; i <= 10; i++) await pt('touchMove', h.y + h.height / 2 + (top.y - 6 - h.y) * i / 10);
+  await pt('touchEnd'); await p.waitForTimeout(500);
+  const call = st.calls.find(c => c[0] === '/api/reorder');
+  ok(call && call[1].ids.join() === 'r3,r1,r2', 'drag: the last post dragged to the top sends the new order');
+  ok(await order() === 'r3,r1,r2' && /post r3/.test(await p.locator('#actList .row[data-rid]').first().innerText()), 'drag: the list shows the new order, same times');
+  ok(errs.length === 0, 'drag: no page errors ' + errs.join('|'));
   await p.close();
 }
 // ---- post hold switch and gap stepper (phone) ----

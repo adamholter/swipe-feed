@@ -103,6 +103,11 @@ input[type=datetime-local]{width:100%;margin-top:10px;background:#0d0d0d;border:
 .row .a{font-size:14px;color:var(--fg);border:1px solid #2a2a2a;border-radius:14px;padding:6px 12px;flex:0 0 auto}
 .row a.a{text-decoration:none}
 .row .a:disabled{opacity:.4}
+.row .hdl{flex:0 0 auto;width:28px;height:46px;margin:0 -6px 0 -8px;display:grid;place-items:center;color:#6a6a6a;touch-action:none;cursor:grab;background:transparent;border:0;padding:0}
+.row .hdl svg{width:14px;height:22px;fill:currentColor;stroke:none}
+.row.lift{position:relative;z-index:2;background:#222;border-radius:10px;border-bottom-color:transparent;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+.row.lift .hdl{cursor:grabbing;color:var(--fg)}
+#actList.sorting{user-select:none;-webkit-user-select:none}
 .more2{display:block;margin:14px auto 4px}
 .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:#1f1f1f;border-radius:22px;padding:10px 8px 10px 16px;display:flex;gap:12px;align-items:center;font-size:15px;opacity:0;pointer-events:none;transition:.2s;z-index:20;white-space:nowrap}
 .toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
@@ -899,26 +904,63 @@ function stepHold(dir) {
 }
 $('#holdMinus').onclick = () => stepHold(-1);
 $('#holdPlus').onclick = () => stepHold(1);
+let actDrag = false;
 async function openAct() {
-  openSheet('#shAct'); $('#actList').innerHTML = '<div class="sec">Loading…</div>';
+  if (actDrag) return;
+  openSheet('#shAct'); if (!$('#actList').children.length) $('#actList').innerHTML = '<div class="sec">Loading…</div>';
   try {
-    const {requests} = await api('/api/activity');
+    const {requests} = await api('/api/activity'); if (actDrag) return;
     const isLater = r => (r.kind === 'post' || r.kind === 'thread') && r.status === 'queued' && new Date(r.runAt) > Date.now() + 60000;
     const groups = [['Needs attention', r => r.status === 'failed'], ['Scheduled', isLater], ['In progress', r => !isLater(r) && !['done', 'posted', 'failed'].includes(r.status)], ['Done', r => ['done', 'posted'].includes(r.status)]];
     let html = '';
     for (const [name, f] of groups) {
       const rs = requests.filter(f); if (!rs.length) continue;
-      html += `<div class="sec">${name}</div>` + rs.slice(0, name === 'Done' ? 25 : 50).map(row).join('');
+      const later = name === 'Scheduled'; if (later) rs.sort((a, b) => new Date(a.runAt) - new Date(b.runAt)); // next to post on top
+      html += `<div class="sec">${later && rs.length > 1 ? 'Scheduled · drag to reorder' : name}</div>` + rs.slice(0, name === 'Done' ? 25 : 50).map(r => row(r, later && rs.length > 1)).join('');
     }
-    $('#actList').innerHTML = html || '<div class="sec">Nothing yet</div>';
+    const top = $('#actList').scrollTop;
+    $('#actList').innerHTML = html || '<div class="sec">Nothing yet</div>'; $('#actList').scrollTop = top;
     $('#actList').querySelectorAll('[data-act]').forEach(b => b.onclick = () => reqAction(b.dataset.id, b.dataset.act));
+    $('#actList').querySelectorAll('.hdl').forEach(h => h.onpointerdown = e => dragRow(h, e));
   } catch (e) { $('#actList').innerHTML = `<div class="sec">${esc(e.message)}</div>`; }
 }
-function row(r) {
+// Drag a waiting post by its handle. The times stay where they are; the posts move between them.
+function dragRow(h, e) {
+  if (actDrag) return;
+  const el = h.closest('.row'), list = $('#actList'), ids = () => [...list.querySelectorAll('.row[data-rid]')].map(x => x.dataset.rid);
+  e.preventDefault(); e.stopPropagation(); try { h.setPointerCapture(e.pointerId); } catch {}
+  const before = ids().join(); let y0 = e.clientY, last = e.clientY; actDrag = true; el.classList.add('lift'); list.classList.add('sorting');
+  const place = () => {
+    let dy = last - y0;
+    for (;;) { // the neighbour moves, never the lifted row, so the pointer stays captured
+      const prev = el.previousElementSibling, next = el.nextElementSibling;
+      if (prev && prev.dataset.rid && dy < -prev.offsetHeight / 2) { const k = prev.offsetHeight; el.after(prev); y0 -= k; dy += k; }
+      else if (next && next.dataset.rid && dy > next.offsetHeight / 2) { const k = next.offsetHeight; el.before(next); y0 += k; dy -= k; }
+      else break;
+    }
+    el.style.transform = `translateY(${dy}px)`;
+  };
+  const move = ev => {
+    last = ev.clientY;
+    const lr = list.getBoundingClientRect(), s0 = list.scrollTop;
+    if (last < lr.top + 36) list.scrollTop -= 14; else if (last > lr.bottom - 36) list.scrollTop += 14;
+    y0 -= list.scrollTop - s0; place();
+  };
+  const end = async () => {
+    h.removeEventListener('pointermove', move); h.removeEventListener('pointerup', end); h.removeEventListener('pointercancel', end);
+    el.style.transform = ''; el.classList.remove('lift'); list.classList.remove('sorting'); actDrag = false;
+    const order = ids(); if (order.join() === before) return;
+    try { await api('/api/reorder', {ids: order}); } catch (err) { toast(err.message); }
+    openAct();
+  };
+  h.addEventListener('pointermove', move); h.addEventListener('pointerup', end); h.addEventListener('pointercancel', end);
+}
+function row(r, sortable) {
+  const later = isFinite(new Date(r.runAt)) && (r.kind === 'post' || r.kind === 'thread') && r.status === 'queued' && new Date(r.runAt) > Date.now() + 60000;
   const st = isFinite(new Date(r.runAt)) && (r.kind === 'post' || r.kind === 'thread') && r.status === 'queued' && new Date(r.runAt) > Date.now() + 60000 ? 'Scheduled ' + fmtTime(r.runAt) : (LABEL[r.kind] || {})[r.status] || r.status;
   const title = r.kind === 'batch' ? `Batch of ${r.payload.count || 10}${r.payload.text ? ': ' + r.payload.text : ''}` : r.kind === 'edit' ? (r.payload.thread ? `Edit thread: ${r.payload.text || ''}` : `Edit #${r.num}: ${r.payload.text || ''}`) : r.kind === 'thread' ? `Thread (${(r.payload.parts || []).length}): ${r.payload.caption || ''}` : (r.payload.caption || r.title || '');
   const ni = (r.payload.images || []).length, imgs = ni ? `${ni} image${ni > 1 ? 's' : ''} · ` : '';
-  const sub = imgs + (r.status === 'failed' ? (r.result || 'Failed') : r.kind === 'thread' && r.result ? r.result : r.status === 'done' && r.result ? `${st} · ${r.result}` : `${st} · ${ago(r.updated)}`);
+  const sub = imgs + (r.status === 'failed' ? (r.result || 'Failed') : r.kind === 'thread' && r.result ? r.result : r.status === 'done' && r.result ? `${st} · ${r.result}` : later ? st : `${st} · ${ago(r.updated)}`);
   let a = '';
   const isPostReq = r.kind === 'post' || r.kind === 'thread', inFlight = ['queued', 'claimed', 'posting'].includes(r.status);
   if (isPostReq && inFlight) a = `<button class="a" data-act="cancel" data-id="${r.id}">${r.url ? 'Stop' : 'Undo'}</button>`;
@@ -926,7 +968,8 @@ function row(r) {
   else if (r.status === 'failed') a = `<button class="a" data-act="retry" data-id="${r.id}">Retry</button>` + (isPostReq && !r.url ? `<button class="a" data-act="cancel" data-id="${r.id}">Undo</button>` : '');
   else if (r.status === 'queued') a = `<button class="a" data-act="cancel" data-id="${r.id}">Cancel</button>`;
   const pic = r.thumb ? `<img src="${r.thumb}" alt="">` : `<div class="ic">${r.kind === 'batch' ? '+' : '✎'}</div>`;
-  return `<div class="row">${pic}<div class="b"><div class="t">${esc(title)}</div><div class="s${r.status === 'failed' ? ' bad' : ''}">${esc(sub)}</div></div>${a}</div>`;
+  const hdl = sortable ? `<button class="hdl" aria-label="Drag to reorder"><svg viewBox="0 0 14 22"><circle cx="4" cy="5" r="1.6"/><circle cx="10" cy="5" r="1.6"/><circle cx="4" cy="11" r="1.6"/><circle cx="10" cy="11" r="1.6"/><circle cx="4" cy="17" r="1.6"/><circle cx="10" cy="17" r="1.6"/></svg></button>` : '';
+  return `<div class="row"${sortable ? ` data-rid="${esc(r.id)}"` : ''}>${hdl}${pic}<div class="b"><div class="t">${esc(title)}</div><div class="s${r.status === 'failed' ? ' bad' : ''}">${esc(sub)}</div></div>${a}</div>`;
 }
 async function reqAction(id, action) {
   try { const x = await api('/api/request', {id, action}); toast(action !== 'cancel' ? 'Retrying' : x.stopped ? `Stopped: ${x.up} of ${x.of} posts are up` : 'Stopped. Back in your feed as a draft'); if (action === 'cancel') { handled.clear(); load(); } openAct(); refreshDot(); }

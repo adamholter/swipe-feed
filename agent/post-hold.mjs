@@ -46,6 +46,24 @@ export const slots = (n, until, now = Date.now(), gapMs = GAP_MS) => {
   return Array.from({length: n}, (_, i) => until + i * gapMs);
 };
 
+// The hold keeps one ordered queue. Posts whose slot came up while the hold was still on go first, then the ones already placed,
+// then posts chosen just now. Each sits at least one gap after the one before, so a new post never lands on a taken slot (Nov 12).
+// Returns the posts whose time changes, as [{id, at}] with at in ms.
+export function planHeld(dueHeld, sched, dueNew, until, gapMs = GAP_MS) {
+  const out = []; let prev = until - gapMs;
+  for (const r of dueHeld) { prev += gapMs; out.push({id: r.id, at: prev}); }
+  for (const r of sched) { const own = Date.parse(r.run_at), at = Math.max(own, prev + gapMs); if (at !== own) out.push({id: r.id, at}); prev = at; }
+  for (const r of dueNew) { prev += gapMs; out.push({id: r.id, at: prev}); }
+  return out;
+}
+// You can drag the queue into a new order in the app, which swaps the times between posts. A held post that now sits on another
+// held post's time is still the hold's to move. True when anything changed.
+export function adoptMoved(held, scheduled) {
+  const times = new Set(Object.values(held)); let changed = false;
+  for (const r of scheduled) if (held[r.id] && held[r.id] !== r.run_at && times.has(r.run_at)) { held[r.id] = r.run_at; changed = true; }
+  return changed;
+}
+
 export function holdOn(logDir, setting) {
   try { if (fs.existsSync(path.join(logDir, 'post-hold.off'))) return false; } catch {}
   return setting !== false;

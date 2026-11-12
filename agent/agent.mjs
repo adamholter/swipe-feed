@@ -8,7 +8,7 @@ import path from 'node:path';
 import { api, authHeaders, cfg, log, run, FEED, LOG_DIR, PIECES, X_HANDLE } from './lib.mjs';
 import { execFileSync } from 'node:child_process';
 import { sync } from './sync.mjs';
-import { holdOn, holdUntil, slots, timelineLast, readHeld, writeHeld, gapFrom } from './post-hold.mjs';
+import { holdOn, holdUntil, slots, timelineLast, readHeld, writeHeld, gapFrom, planHeld, adoptMoved } from './post-hold.mjs';
 const OWN_POST = new RegExp('^https://(?:x|twitter)\\.com/' + X_HANDLE + '/status/\\d+$', 'i'); // links the poster reports are trusted only when they are this account's posts
 const TICK = 10000, SYNC_EVERY = 10 * 60000;
 let lastSync = 0, busy = '', posting = null;
@@ -222,6 +222,17 @@ async function regapHeld(hold) {
   log('hold gap', lastGap / 60000, '->', hold.gap / 60000, 'min, moved', mine.map(r => r.id));
   lastGap = hold.gap;
 }
+async function adoptHeld(hold) {
+  const held = readHeld(LOG_DIR); if (!Object.keys(held).length) return;
+  const all = (await api('/api/agent/scheduled')).requests;
+  let changed = adoptMoved(held, all); if (changed) log('hold: queue reordered in the app');
+  // keep the waiting posts one gap apart: two on one slot, or a post made outside the app, pushes the later ones back
+  if (hold.on) for (const mv of planHeld([], all.filter(r => held[r.id] === r.run_at), [], hold.until, hold.gap)) {
+    const at = new Date(mv.at).toISOString();
+    await api('/api/agent/reschedule', {method: 'POST', body: {id: mv.id, runAt: at}}); held[mv.id] = at; changed = true; log('hold: respaced', mv.id, 'to', at);
+  }
+  if (changed) writeHeld(LOG_DIR, held);
+}
 async function releaseHeld(on) {
   if (on) return;
   const held = readHeld(LOG_DIR); if (!Object.keys(held).length) return;
@@ -246,6 +257,7 @@ async function tick() {
   // edits and batches relay right away; posts run one at a time on their own lane so a slow post
   // (can take 15+ min) never holds up relays or the heartbeat
   const hold = await holdState();
+  await adoptHeld(hold).catch(e => log('hold adopt error', e.message));
   await releaseHeld(hold.on).catch(e => log('hold release error', e.message));
   await regapHeld(hold).catch(e => log('hold regap error', e.message));
   if (!posting) {
@@ -258,20 +270,24 @@ async function tick() {
     }
   }
   const pending = (await api('/api/agent/pending')).requests;
-  const dueSlots = posting ? null : slots(pending.filter(r => r.kind === 'post' || r.kind === 'thread').length, hold.until, Date.now(), hold.gap);
-  let slot = 0;
+  const isPost = r => r.kind === 'post' || r.kind === 'thread';
+  const duePosts = pending.filter(isPost);
+  let holding = false;
+  if (!posting && hold.until > Date.now() && duePosts.length) {
+    holding = true;
+    try {
+      const held = readHeld(LOG_DIR);
+      const sched = (await api('/api/agent/scheduled')).requests.filter(r => held[r.id] === r.run_at);
+      for (const mv of planHeld(duePosts.filter(r => held[r.id]), sched, duePosts.filter(r => !held[r.id]), hold.until, hold.gap)) {
+        const at = new Date(mv.at).toISOString();
+        try { await api('/api/agent/reschedule', {method: 'POST', body: {id: mv.id, runAt: at}}); held[mv.id] = at; log('post held', mv.id, 'until', at); }
+        catch (e) { log('hold reschedule error', mv.id, e.message); }
+      }
+      writeHeld(LOG_DIR, Object.fromEntries(Object.entries(held).slice(-100)));
+    } catch (e) { log('hold plan error', e.message); holding = false; } // fail open: a broken check must never block a post
+  }
   for (const r of pending) {
-    const isPostReq = r.kind === 'post' || r.kind === 'thread';
-    if (isPostReq && posting) continue;
-    if (isPostReq && dueSlots) {
-      const at = new Date(dueSlots[slot++]).toISOString();
-      try {
-        await api('/api/agent/reschedule', {method: 'POST', body: {id: r.id, runAt: at}});
-        const held = readHeld(LOG_DIR); held[r.id] = at; writeHeld(LOG_DIR, Object.fromEntries(Object.entries(held).slice(-100)));
-        log('post held', r.id, r.num, 'until', at);
-      } catch (e) { log('hold reschedule error', r.id, e.message); }
-      continue;
-    }
+    if (isPost(r) && (posting || holding)) continue;
     if (!(await api('/api/agent/claim', {method: 'POST', body: {id: r.id}})).ok) continue;
     if (r.kind === 'post' || r.kind === 'thread') { startPost(r, 1); continue; }
     try { await relay(r); } catch (e) {
