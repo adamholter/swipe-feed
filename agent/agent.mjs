@@ -9,6 +9,7 @@ import { api, authHeaders, cfg, log, run, FEED, LOG_DIR, PIECES, X_HANDLE } from
 import { execFileSync } from 'node:child_process';
 import { sync } from './sync.mjs';
 import { holdOn, holdUntil, slots, timelineLast, readHeld, writeHeld, gapFrom } from './post-hold.mjs';
+const OWN_POST = new RegExp('^https://(?:x|twitter)\\.com/' + X_HANDLE + '/status/\\d+$', 'i'); // links the poster reports are trusted only when they are this account's posts
 const TICK = 10000, SYNC_EVERY = 10 * 60000;
 let lastSync = 0, busy = '', posting = null;
 
@@ -138,6 +139,7 @@ async function doThread(r, n = 1) {
     log('thread part', r.id, i + 1, n, {...res, log: undefined}); busy = '';
     retries.delete(r.id);
     if (res.ok || res.posted !== false) ledgerAdd(r, res, part.text, part.num);
+    if (res.ok && res.url && !OWN_POST.test(res.url)) res = {ok: true, url: null}; // posted, but the reported link isn't one of this account's posts: don't store it or reply to it
     if (res.ok && res.url) {
       await done(res.url);
       if (i === 0 && media) liEnqueue({id: r.id, num: part.num, payload: {caption: part.text}}, media); // LinkedIn has no threads: the lead post only

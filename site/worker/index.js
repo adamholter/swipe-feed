@@ -6,6 +6,8 @@ const now = () => new Date().toISOString();
 const json = (data, status = 200) => new Response(JSON.stringify(data), {status, headers: {'content-type': 'application/json', 'cache-control': 'no-store'}});
 const bad = (msg, status = 400) => json({error: msg}, status);
 const parse = s => { try { return JSON.parse(s); } catch { return null; } };
+// Links reported by the agent are shown as links in the app: keep only plain https URLs (no javascript: or data: schemes).
+const httpsUrl = u => { const v = String(u ?? '').trim(); return /^https:\/\/[^\s"'<>`]+$/.test(v) ? v : null; };
 const OPEN_POST = ['queued', 'scheduled', 'claimed', 'posting'];
 
 async function body(request, limit = 64 * 1024) {
@@ -210,7 +212,8 @@ async function agentThreadPart(env, b) {
   if (!r || r.kind !== 'thread') return bad('unknown thread request', 404);
   const tid = (parse(r.payload) || {}).threadId, t = await threadRow(env, tid); if (!t) return bad('unknown thread', 404);
   const parts = parse(t.parts) || [], p = parts[b.index | 0]; if (!p) return bad('unknown part');
-  p.url = b.url || null;
+  b.url = httpsUrl(b.url);
+  p.url = b.url;
   const at = now(), st = [env.DB.prepare(`UPDATE threads SET parts = ?, url = COALESCE(url, ?), updated_at = ? WHERE id = ?`).bind(JSON.stringify(parts), b.url ?? null, at, t.id)];
   if (p.itemId) st.push(env.DB.prepare(`UPDATE decisions SET status = 'posted', tweet_url = ?, error = NULL, updated_at = ? WHERE item_id = ? AND request_id = ?`).bind(b.url ?? null, at, p.itemId, r.id));
   await env.DB.batch(st);
@@ -443,6 +446,7 @@ async function upsertItems(env, items) {
 }
 
 async function agentStatus(env, b) {
+  b.url = httpsUrl(b.url);
   const r = await env.DB.prepare(`SELECT * FROM requests WHERE id = ?`).bind(b.id).first();
   if (!r) return bad('unknown request', 404);
   const t = now(), status = String(b.status || '');

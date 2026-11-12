@@ -922,7 +922,7 @@ function row(r) {
   let a = '';
   const isPostReq = r.kind === 'post' || r.kind === 'thread', inFlight = ['queued', 'claimed', 'posting'].includes(r.status);
   if (isPostReq && inFlight) a = `<button class="a" data-act="cancel" data-id="${r.id}">${r.url ? 'Stop' : 'Undo'}</button>`;
-  else if (isPostReq && r.url && r.status !== 'failed') a = `<a class="a" href="${esc(r.url)}" target="_blank" rel="noopener">View</a>`;
+  else if (isPostReq && /^https:\/\//.test(r.url || '') && r.status !== 'failed') a = `<a class="a" href="${esc(r.url)}" target="_blank" rel="noopener">View</a>`;
   else if (r.status === 'failed') a = `<button class="a" data-act="retry" data-id="${r.id}">Retry</button>` + (isPostReq && !r.url ? `<button class="a" data-act="cancel" data-id="${r.id}">Undo</button>` : '');
   else if (r.status === 'queued') a = `<button class="a" data-act="cancel" data-id="${r.id}">Cancel</button>`;
   const pic = r.thumb ? `<img src="${r.thumb}" alt="">` : `<div class="ic">${r.kind === 'batch' ? '+' : '✎'}</div>`;
